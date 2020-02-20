@@ -7,7 +7,9 @@ void identifyField(__uint8_t* field, unsigned int field_length);
 void test();
  
 int main () {
-	readMessage(openFile("51_Inc_FAST.bin"));
+	//readMessage(openFile("51_Inc_FAST.bin"));
+
+	test();
 
     return 0;
 }
@@ -42,11 +44,7 @@ void readMessage(FILE* file){
 		CurrentChunk = (header[6] << 8) | (header[7]);
 		MsgLength = (header[8] << 8) | (header[9]);
 
-		printf(" MsqSeqNum: %d \n", MsgSeqNum);
-		printf(" NoChunks: %d \n", NoChunks);
-		printf(" CurrentChunk: %d \n", CurrentChunk);
-		printf(" MsgLength: %d \n", MsgLength);
-		printf(" Fields: \n");
+		printf(" MsqSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n Fields: \n", MsgSeqNum, NoChunks, CurrentChunk, MsgLength);
 
 		for(int i = 0; i < MsgLength; i++){
 			fread(&byte, 1, 1, file);
@@ -58,7 +56,7 @@ void readMessage(FILE* file){
 				field[field_length] = byte;
 				field_length++;
 			}
-			if((byte >> 7 && byte_aux >> 7)){ // if the MSB is 1
+			if((byte >> 7 & byte_aux >> 7)){ // if the MSB is 1
 				identifyField(field, field_length);
 				strcpy(field, "");
 				field_length = 0;
@@ -75,4 +73,17 @@ FILE* openFile(char* fileName) {
 
 void test(){
 	//test blocks here
+	__uint8_t field[3] = {0x2c, 0x31, 0xf9};
+	//__uint8_t field[2] = {0x01, 0x90};
+	int result;
+	int aux_result;
+	int field_length = 3;
+	result = 0;
+
+	for(int i = 0; i < field_length - 1; i++){
+		field[field_length -1] = field[field_length - 1] << 1;
+		result = (result << 8) | (field[field_length - 2] << 8) | field[field_length - 1];
+		result = result >> 1;
+	}
+	printf(" %d \n", result);
 }
