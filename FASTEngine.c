@@ -4,7 +4,7 @@
 FILE* openFile(char* fileName);
 __uint32_t byteDecoder32(__uint8_t* field, unsigned int field_length);
 void readMessage(FILE* file);
-void identifyField(__uint8_t* FASTMessage, unsigned int FASTMessage_length);
+void identifyTemplate(__uint8_t* FASTMessage, unsigned int FASTMessage_length);
 void templateDecoder(__uint16_t TemplateID, __uint8_t* FASTMessage, unsigned int FASTMessage_length);
 void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length);
 void MDIncRefresh_145(__uint8_t* FASTMessage, unsigned int FASTMessage_length);
@@ -13,6 +13,7 @@ void test();
  
 int main () {
 	readMessage(openFile("51_Inc_FAST.bin"));
+	//test();
     return 0;
 }
 
@@ -99,14 +100,14 @@ void templateDecoder(__uint16_t TemplateID, __uint8_t* FASTMessage, unsigned int
 		case 144 : MDHeartbeat_144(FASTMessage, FASTMessage_length);
 		break;
 
-		case 145: MDIncRefresh_145(FASTMessage, FASTMessage_length);
+		case 145 : MDIncRefresh_145(FASTMessage, FASTMessage_length);
 		break;
 
 		default : templateDoNotIdentified(TemplateID);
 	}
 }
 
-void identifyField(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
+void identifyTemplate(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
 	__uint8_t field[7000];
     __uint32_t PMAP = 0;
     __uint16_t TemplateID = 0;
@@ -149,7 +150,7 @@ void readMessage(FILE* file){
 	int MsgLength = 0;
 
 	//while(fread(&byte, 1, 1, file) > 0){
-	for(int i = 0; i < 1171; i++){ // number of messages
+	for(int i = 0; i < 1250; i++){ // number of messages
 		printf(" Message %d:    ----------------------------------------------------------\n", i+1);
 		for(int i = 0; i < 10; i++){ //read header
 			fread(&byte, 1, 1, file);
@@ -170,7 +171,7 @@ void readMessage(FILE* file){
 			FASTMessage_length++;
 		}
 
-		identifyField(FASTMessage, FASTMessage_length);
+		identifyTemplate(FASTMessage, FASTMessage_length);
 
 		FASTMessage_length = 0;
 
@@ -183,16 +184,18 @@ void templateDoNotIdentified(__uint16_t TemplateID){
 }
 
 __uint32_t byteDecoder32(__uint8_t* field, unsigned int field_length){
-    int j = field_length - 2; //1
+    int j = field_length - 2;
     __uint32_t result;
     
     result = field[field_length-1];
     
     for(int i = 0; i < field_length - 1; i++){
-        result = result << 1;
-        result = (field[j] << ((i+1) * 8)) | result;
+        result = result << 33 - ((i + 1) * 8);
+        result = result >> 32 - ((i + 1) * 8);
+        result = (field[j] << ((i + 1) * 8)) | result;
         j--;
     } 
+
     result = result >> (field_length-1); 
     
     return result;
@@ -205,5 +208,9 @@ FILE* openFile(char* fileName) {
 }
 
 void test(){
+	#define field_length 3
+	__uint8_t field[field_length] = {0x32, 0x36, 0xb2};
+
+	printf("%02x \n", byteDecoder32(field, field_length));
 
 }
