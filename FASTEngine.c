@@ -109,7 +109,7 @@ void templateDecoder(__uint16_t TemplateID, __uint8_t* FASTMessage, unsigned int
 
 void identifyTemplate(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
 	__uint8_t field[7000];
-    __uint32_t PMAP = 0;
+    __uint32_t PMap = 0;
     __uint16_t TemplateID = 0;
     unsigned int field_length = 0;
 	unsigned int noCurrentField = 0;
@@ -121,9 +121,13 @@ void identifyTemplate(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
     	if((field[field_length-1] >> 7) & 0b00000001){
     		noCurrentField++;
     		if(noCurrentField == 1){
-				printf(" PMap: %d \n", field[0]);
+    			PMap = byteDecoder32(field, field_length);
+				printf(" PMap: %02x \n", PMap);
+				if(!(PMap & 0b01000000)){
+					printf(" TemplateID do not specified in the message. \n");
+				}
 			}
-			else if(noCurrentField == 2){
+			else if(noCurrentField == 2 && (PMap & 0b01000000)){
 				TemplateID = byteDecoder32(field, field_length);
 			}
 			if(TemplateID > 0){
@@ -150,7 +154,7 @@ void readMessage(FILE* file){
 	int MsgLength = 0;
 
 	//while(fread(&byte, 1, 1, file) > 0){
-	for(int i = 0; i < 1250; i++){ // number of messages
+	for(int i = 0; i < 1; i++){ // number of messages //1250
 		printf(" Message %d:    ----------------------------------------------------------\n", i+1);
 		for(int i = 0; i < 10; i++){ //read header
 			fread(&byte, 1, 1, file);
@@ -208,8 +212,12 @@ FILE* openFile(char* fileName) {
 }
 
 void test(){
-	#define field_length 3
-	__uint8_t field[field_length] = {0x32, 0x36, 0xb2};
+	#define field_length 1
+	__uint8_t field[field_length] = {0xc0};
+
+	if((field[field_length-1]) & 0b00000001){
+		printf("Template available \n");
+	}
 
 	printf("%02x \n", byteDecoder32(field, field_length));
 
