@@ -5,9 +5,9 @@ FILE* openFile(char* fileName);
 __uint32_t byteDecoder32(__uint8_t* field, unsigned int field_length);
 void readMessage(FILE* file);
 void identifyTemplate(__uint8_t* FASTMessage, unsigned int FASTMessage_length);
-void templateDecoder(__uint16_t TemplateID, __uint8_t* FASTMessage, unsigned int FASTMessage_length);
+void templateDecoder(__uint16_t TemplateID, __uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length);
 void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length);
-void MDIncRefresh_145(__uint8_t* FASTMessage, unsigned int FASTMessage_length);
+void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length);
 void templateDoNotIdentified(__uint16_t TemplateID);
 void test();
  
@@ -17,7 +17,7 @@ int main () {
     return 0;
 }
 
-void MDIncRefresh_145(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
+void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length){
 	__uint8_t field[7000];
 	unsigned int field_length = 0;
 	unsigned int noCurrentField = 0;
@@ -25,6 +25,9 @@ void MDIncRefresh_145(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
 	__uint32_t MsgSeqNum = 0;
 	__uint64_t SendintTime = 0;
 	__uint32_t TradeDate = 0;
+	__uint32_t NoMDEntries = 0;
+	__uint32_t Sequence_PMap = 0;
+	__uint32_t MDUpdateAction = 0;
 
 
 	printf(" TemplateID: 145 || Template name=MDIncRefresh_145 \n");
@@ -45,10 +48,22 @@ void MDIncRefresh_145(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
 				}
 				printf("\n");
 			}
+			else if(noCurrentField == 5){ 
+				TradeDate = byteDecoder32(field, field_length);
+				printf(" TradeDate: %d \n", TradeDate);
+			}
+			else if(noCurrentField == 6){ 
+				NoMDEntries = byteDecoder32(field, field_length);
+				printf(" NoMDEntries: %d \n", NoMDEntries);
+			}
+			else if(noCurrentField == 7){ 
+				Sequence_PMap = byteDecoder32(field, field_length);
+				printf(" Sequence_PMap: %d \n", Sequence_PMap);
+			}
 			else if(!(noCurrentField == 0 || noCurrentField == 1 || noCurrentField == 2)){
 				printf(" Field number %d do not identified: ", noCurrentField);
 				for(int i=0; i < field_length; i++){
-					printf("%02x ", (unsigned int) field[i]); //%u to a series of bytes while(*field){printf("%02x ", (unsigned int) *field++); // cast the character to an unsigned type to be safe
+					printf("%02x ", (unsigned int) field[i]);
 				}
 				printf("\n");
 			}
@@ -94,13 +109,13 @@ void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
     }
 }
 
-void templateDecoder(__uint16_t TemplateID, __uint8_t* FASTMessage, unsigned int FASTMessage_length){
+void templateDecoder(__uint16_t TemplateID, __uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length){
 	switch(TemplateID)
 	{
 		case 144 : MDHeartbeat_144(FASTMessage, FASTMessage_length);
 		break;
 
-		case 145 : MDIncRefresh_145(FASTMessage, FASTMessage_length);
+		case 145 : MDIncRefresh_145(PMap, FASTMessage, FASTMessage_length);
 		break;
 
 		default : templateDoNotIdentified(TemplateID);
@@ -133,7 +148,7 @@ void identifyTemplate(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
 			if(TemplateID > 0){
 				//talvez colocar um break aqui e mandar a msg pro template
 				//templateDecoder(TemplateID, field, field_length, noCurrentField);
-				templateDecoder(TemplateID, FASTMessage, FASTMessage_length);
+				templateDecoder(TemplateID, PMap, FASTMessage, FASTMessage_length);
 				break;
 			}
 			strcpy(field, "");
@@ -154,7 +169,7 @@ void readMessage(FILE* file){
 	int MsgLength = 0;
 
 	//while(fread(&byte, 1, 1, file) > 0){
-	for(int i = 0; i < 1; i++){ // number of messages //1250
+	for(int i = 0; i < 1171; i++){ // number of messages //1250
 		printf(" Message %d:    ----------------------------------------------------------\n", i+1);
 		for(int i = 0; i < 10; i++){ //read header
 			fread(&byte, 1, 1, file);
@@ -192,6 +207,10 @@ __uint32_t byteDecoder32(__uint8_t* field, unsigned int field_length){
     __uint32_t result;
     
     result = field[field_length-1];
+
+    if(field_length == 1){
+    	field_length = 2;
+    }
     
     for(int i = 0; i < field_length - 1; i++){
         result = result << 33 - ((i + 1) * 8);
@@ -213,12 +232,11 @@ FILE* openFile(char* fileName) {
 
 void test(){
 	#define field_length 1
-	__uint8_t field[field_length] = {0xc0};
+	__uint8_t field[field_length] = {0x81};
 
-	if((field[field_length-1]) & 0b00000001){
+	printf("%d \n", byteDecoder32(field, field_length));
+
+	/*if((field[field_length-1]) & 0b00000001){
 		printf("Template available \n");
-	}
-
-	printf("%02x \n", byteDecoder32(field, field_length));
-
+	}*/
 }
