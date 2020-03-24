@@ -3,6 +3,7 @@
  
 FILE* openFile(char* fileName);
 __uint32_t byteDecoder32(__uint8_t* field, unsigned int field_length);
+int pMapCheck(__uint32_t PMap, unsigned int PMap_length, __uint32_t noCurrentField);
 void readMessage(FILE* file);
 void identifyTemplate(__uint8_t* FASTMessage, unsigned int FASTMessage_length);
 void templateDecoder(__uint16_t TemplateID, __uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length);
@@ -20,6 +21,7 @@ int main () {
 void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length){
 	__uint8_t field[7000];
 	unsigned int field_length = 0;
+	unsigned int Sequence_PMap_length = 0;
 	unsigned int noCurrentField = 0;
 
 	__uint32_t MsgSeqNum = 0;
@@ -27,7 +29,9 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	__uint32_t TradeDate = 0;
 	__uint32_t NoMDEntries = 0;
 	__uint32_t Sequence_PMap = 0;
-	__uint32_t MDUpdateAction = 0;
+	__uint32_t MDUpdateAction = 1;
+	__uint64_t SecurityID = 0;
+	__uint32_t RptSeq = 0;
 
 
 	printf(" TemplateID: 145 || Template name=MDIncRefresh_145 \n");
@@ -59,6 +63,64 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 			else if(noCurrentField == 7){ 
 				Sequence_PMap = byteDecoder32(field, field_length);
 				printf(" Sequence_PMap: %d \n", Sequence_PMap);
+				Sequence_PMap_length = field_length;
+			}
+			else if(noCurrentField == 8){
+				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 1)){
+					MDUpdateAction = byteDecoder32(field, field_length); //copy function
+					printf(" MDUpdateAction: %d \n", MDUpdateAction);
+				}
+				else{
+					printf(" MDUpdateAction: %d \n", MDUpdateAction); //previous value
+				}
+			}
+			else if(noCurrentField == 9){
+				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 1)){
+					printf(" MDEntryType: ");
+					for(int i=0; i < field_length; i++){
+						printf("%02x ", (unsigned int) field[i]); //%u to a series of bytes while(*field){printf("%02x ", (unsigned int) *field++); // cast the character to an unsigned type to be safe
+					}
+					printf("\n");
+				}
+				else{
+					printf(" Do not implemented yet: <copy MDEntryType>. \n");
+				}
+			}
+			else if(noCurrentField == 10){
+				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 1)){
+					printf(" SecurityID: ");
+					for(int i=0; i < field_length; i++){
+						printf("%02x ", (unsigned int) field[i]); //%u to a series of bytes while(*field){printf("%02x ", (unsigned int) *field++); // cast the character to an unsigned type to be safe
+					}
+					printf("\n");
+				}
+				else{
+					printf(" Do not implemented yet: <copy SecurityID>. \n");
+				}
+			}
+			else if(noCurrentField == 11){
+				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 1)){
+					RptSeq = byteDecoder32(field, field_length); //copy function
+					printf(" RptSeq: %d \n", RptSeq);
+				}
+				else{
+					if(RptSeq > 0){ //if assigned
+						RptSeq = RptSeq++; //increment
+					}
+					printf(" RptSeq: %d \n", RptSeq); //if undefined is the previous value
+				}
+			}
+			else if(noCurrentField == 12){
+				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 1)){
+					printf(" QuoteCondition: ");
+					for(int i=0; i < field_length; i++){
+						printf("%02x ", (unsigned int) field[i]); //%u to a series of bytes while(*field){printf("%02x ", (unsigned int) *field++); // cast the character to an unsigned type to be safe
+					}
+					printf("\n");
+				}
+				else{
+					printf(" QuoteCondition: Absent. \n");
+				}
 			}
 			else if(!(noCurrentField == 0 || noCurrentField == 1 || noCurrentField == 2)){
 				printf(" Field number %d do not identified: ", noCurrentField);
@@ -224,6 +286,18 @@ __uint32_t byteDecoder32(__uint8_t* field, unsigned int field_length){
     return result;
 }
 
+int pMapCheck(__uint32_t PMap, unsigned int PMap_length, __uint32_t noCurrentField){
+	__uint32_t aux_bitMap = 0b00000000000000000000000000000001;
+
+	if(PMap & (aux_bitMap << (32 - PMap_length - noCurrentField))){
+		return 1;
+	}
+	else{
+		return 0;
+	}
+
+}
+
 FILE* openFile(char* fileName) {
    static FILE* file;
    file = fopen(fileName, "rb"); 
@@ -231,12 +305,17 @@ FILE* openFile(char* fileName) {
 }
 
 void test(){
-	#define field_length 1
-	__uint8_t field[field_length] = {0x81};
+	#define field_length 4
+	__uint8_t field[field_length] = {0x7b, 0x30, 0x09, 0xc0};
+	__uint32_t PMap = byteDecoder32(field, field_length);
 
-	printf("%d \n", byteDecoder32(field, field_length));
+	if(pMapCheck(PMap, 4, 5)){
+		printf(" Field enabled \n");
+	}
+	else{
+		printf(" Field unabled \n");
+	}
 
-	/*if((field[field_length-1]) & 0b00000001){
-		printf("Template available \n");
-	}*/
+	//printf(" Qtd de bits do PMap: %d \n", 32 - field_length);
+	//printf("%d \n", byteDecoder32(field, field_length));
 }
