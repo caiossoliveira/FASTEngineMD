@@ -32,7 +32,11 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	__uint32_t MDUpdateAction = 1;
 	__uint64_t SecurityID = 0;
 	__uint32_t RptSeq = 0;
-
+	__uint32_t NumberOfOrders = 0;
+	__uint32_t MDEntryTime = 0;
+	__uint32_t MDEntryDate = 0;
+	__uint32_t MDInsertDate = 0;
+	__uint32_t MDInsertTime = 0;
 
 	printf(" TemplateID: 145 || Template name=MDIncRefresh_145 \n");
 	for(int i = 0; i < FASTMessage_length; i++){
@@ -41,14 +45,14 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 
     	if((field[field_length-1] >> 7) & 0b00000001){
     		noCurrentField++;
-    		if(noCurrentField == 3){ //&& (pmap >><< fieldOrder)
+    		if(noCurrentField == 3){
 				MsgSeqNum = byteDecoder32(field, field_length);
 				printf(" MsgSeqNum: %d \n", MsgSeqNum);
 			}
 			else if(noCurrentField == 4){
 				printf(" SendingTime: ");
 				for(int i=0; i < field_length; i++){
-					printf("%02x ", (unsigned int) field[i]); //%u to a series of bytes while(*field){printf("%02x ", (unsigned int) *field++); // cast the character to an unsigned type to be safe
+					printf("%02x ", (unsigned int) field[i]); 				
 				}
 				printf("\n");
 			}
@@ -75,10 +79,10 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 				}
 			}
 			else if(noCurrentField == 9){
-				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 1)){
+				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 2)){
 					printf(" MDEntryType: ");
 					for(int i=0; i < field_length; i++){
-						printf("%02x ", (unsigned int) field[i]); //%u to a series of bytes while(*field){printf("%02x ", (unsigned int) *field++); // cast the character to an unsigned type to be safe
+						printf("%02x ", (unsigned int) field[i]); 					
 					}
 					printf("\n");
 				}
@@ -87,10 +91,10 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 				}
 			}
 			else if(noCurrentField == 10){
-				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 1)){
+				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 3)){
 					printf(" SecurityID: ");
 					for(int i=0; i < field_length; i++){
-						printf("%02x ", (unsigned int) field[i]); //%u to a series of bytes while(*field){printf("%02x ", (unsigned int) *field++); // cast the character to an unsigned type to be safe
+						printf("%02x ", (unsigned int) field[i]); 
 					}
 					printf("\n");
 				}
@@ -99,7 +103,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 				}
 			}
 			else if(noCurrentField == 11){
-				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 1)){
+				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 4)){
 					RptSeq = byteDecoder32(field, field_length); //copy function
 					printf(" RptSeq: %d \n", RptSeq);
 				}
@@ -111,17 +115,114 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 				}
 			}
 			else if(noCurrentField == 12){
-				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 1)){
+				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 5)){
 					printf(" QuoteCondition: ");
 					for(int i=0; i < field_length; i++){
-						printf("%02x ", (unsigned int) field[i]); //%u to a series of bytes while(*field){printf("%02x ", (unsigned int) *field++); // cast the character to an unsigned type to be safe
+						printf("%02x ", (unsigned int) field[i]); 					
 					}
 					printf("\n");
 				}
+			}
+			/*else if(noCurrentField == 13){
+				printf(" MDEntryPx: do not implemented yet. \n");
+			}*/
+			/*else if(noCurrentField == 13 || noCurrentField == 14){
+				if(noCurrentField == 13 && pMapCheck(Sequence_PMap, Sequence_PMap_length, 6)){
+					printf(" MDEntryPx: Expoente: -2 ||");
+				}
+				else if(noCurrentField == 14 && pMapCheck(Sequence_PMap, Sequence_PMap_length, 6)){
+					printf(" Mantissa: ");
+					for(int i=0; i < field_length; i++){
+						printf("%02x ", (unsigned int) field[i]); 					
+					}
+					printf("\n");
+				}
+			}*/
+			else if(noCurrentField == 13){
+				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 6)){
+					printf(" NumberOfOrders: do not implemented yet. \n");
+				}				
+			}
+			else if(noCurrentField == 14){
+				printf(" PriceType: ");
+				for(int i=0; i < field_length; i++){
+					printf("%02x ", (unsigned int) field[i]); 
+				}
+				printf("\n");
+			}
+			else if(noCurrentField == 15){
+				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 9)){
+					MDEntryTime = byteDecoder32(field, field_length);
+					printf(" MDEntryTime: %d \n", MDEntryTime); //copy
+				}
 				else{
-					printf(" QuoteCondition: Absent. \n");
+					printf(" MDEntryTime: %d \n", MDEntryTime); //previous value
 				}
 			}
+			else if(noCurrentField == 16){
+				printf(" MDEntrySize: ");
+				for(int i=0; i < field_length; i++){
+					printf("%02x ", (unsigned int) field[i]); 
+				}
+				printf(" Do not implemented yet: <delta>");
+				printf("\n");
+			}
+			else if(noCurrentField == 17){
+				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 10)){
+					MDEntryDate = byteDecoder32(field, field_length); //copy
+					printf(" MDEntryDate: %d \n", MDEntryDate);
+				}
+				else{
+					if(MDInsertDate > 0){
+						printf(" MDEntryDate: %d \n", MDEntryDate); //previous value
+					}
+				}
+			}
+			else if(noCurrentField == 18){
+				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 11)){
+					MDInsertDate = byteDecoder32(field, field_length); //copy
+					printf(" MDInsertDate: %d \n", MDInsertDate);
+				}
+				else{
+					if(MDInsertDate > 0){
+						printf(" MDInsertDate: %d \n", MDInsertDate); //previous value
+					}
+				}
+			}
+			else if(noCurrentField == 19){
+				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 12)){
+					MDInsertDate = byteDecoder32(field, field_length);
+					printf(" MDInsertTime: %d \n", MDInsertDate); //copy
+				}
+				else{
+					if(MDInsertDate > 0){
+						printf(" MDInsertTime: %d \n", MDInsertDate); //previous value
+					}
+				}
+			}
+			else if(noCurrentField == 20){
+				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 13)){
+					printf(" MDStreamID: ");
+					for(int i=0; i < field_length; i++){
+						printf("%02x ", (unsigned int) field[i]); 
+					}
+					printf(" Do not implemented yet: <default>");
+					printf("\n");
+				}
+			}
+			else if(noCurrentField == 21){
+				if(pMapCheck(Sequence_PMap, Sequence_PMap_length, 14)){
+					printf(" Currency: ");
+					for(int i=0; i < field_length; i++){
+						printf("%02x ", (unsigned int) field[i]); 
+					}
+					printf(" Do not implemented yet: <copy>");
+					printf("\n");
+				}
+			}
+
+
+			//exception:
 			else if(!(noCurrentField == 0 || noCurrentField == 1 || noCurrentField == 2)){
 				printf(" Field number %d do not identified: ", noCurrentField);
 				for(int i=0; i < field_length; i++){
@@ -256,7 +357,7 @@ void readMessage(FILE* file){
 
 		FASTMessage_length = 0;
 
-		printf(" ------------------------------------------------------------------------\n\n");
+		printf(" ---------------------------------------------------------------------------\n\n");
 	}
 }
 
