@@ -768,9 +768,11 @@ FILE* openFile(char* fileName) {
 }
 
 int fieldLength(__uint8_t* field){
+	__uint8_t* aux = field;
 	int counter = 0;
-	while(*field){
+	while(*aux){
 		counter++;
+		*aux++;
 	}
 	return counter;
 }
@@ -797,10 +799,14 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t* FASTMessage, int FASTMessage
     	field_length++;
     	if((field[field_length-1] >> 7) & 0b00000001){
     		fieldCounter++;
-    		if(fieldCounter == (templateOrder - zeroCounter)){ //TemplateOrderIndex
+    		if(fieldCounter == (templateOrder - zeroCounter)){
     			for(int j = 0; j < i - ((i - field_length)); j++){
     				newField[j] = FASTMessage[(i - field_length + 1) + j];
     				newFieldCounter++;
+    			}
+
+    			for(int z = 0; z < i; z++){
+    				*FASTMessage++;
     			}
 	    		return newField;
     		}
@@ -809,112 +815,83 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t* FASTMessage, int FASTMessage
 	}
 }
 
+void test2(int* field){
+	*field = (*field)+1;
+	//return counter;
+}
+
 void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length){
+
+	int num = 4;
+	int* ptr = &num;
+
+	printf("\n ptr1: %d ", num);
+	test2(ptr);
+	printf("\n ptr2: %d ", num);
+
+	/*
 	#define MSGSEQNUM 3
 	#define SENDINGTIME 4
-	#define TRADEDATE5
+	#define TRADEDATE 5
+	#define NOMDENTRIES 6 //SequenceMDEntries
+	#define MDENTRIESSEQUENCE_PMAP 7
+	#define MDUPDATEACTION 1
+	#define MDENTRYTYPE 2
+	#define SECURITYID 3
+	#define RPTSEQ 4
+	#define QUOTECONDITION 5
+	#define MDENTRYPX 6
 
-	__uint8_t field[7000];
-	unsigned int field_length = 0;
+	//__uint8_t aux_FASTMessage = FASTMessage;
+	__uint8_t aux_FASTMessage[7000];
+
+	for(int i = 0; i < 7000; i++){
+		aux_FASTMessage[i] = FASTMessage[i];
+	}
+
+	__uint8_t field[7000] = {0x80};
 	unsigned int MDEntriesSequence_PMap_length = 0;
-	unsigned int noTemplateField = 1;
-	unsigned int fieldAlocated = 0; //false
 
-	__uint32_t MsgSeqNum = 0;
+	__uint32_t MsgSeqNum = 0, TradeDate = 0;
 	__uint64_t SendintTime = 0;
-	__uint32_t TradeDate = 0;
+	
 	//SequenceMDEntries
 	__uint32_t NoMDEntries = 0;
 	__uint32_t MDEntriesSequence_PMap = 0;
 	__uint32_t MDUpdateAction = 1;
 
-	__uint8_t newField[7000] = {0x80};
+	__uint8_t* aux = getField(field, aux_FASTMessage, FASTMessage_length, MSGSEQNUM, 0, MDEntriesSequence_PMap_length, 0);
+	MsgSeqNum = byteDecoder32(aux, fieldLength(aux));
+	printf("\n MsgSeqNum: %d \n", MsgSeqNum);
 
-	__uint8_t* test = getField(newField, FASTMessage, FASTMessage_length, MSGSEQNUM, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, 0);
+	aux = getField(field, aux_FASTMessage, FASTMessage_length, SENDINGTIME, 0, MDEntriesSequence_PMap_length, 0);
+	printf(" SendintTime: ");
+	while(*aux){
+		printf( " %02x", (unsigned int) *aux++);
+	}
+	printf("\n");
 
-	//printf(" \n fieldLength: %d \n", fieldLength(test));
-	printf(" \n MsgSeqNum: %d \n", byteDecoder32(test, strlen(test)));
+	aux = getField(field, aux_FASTMessage, FASTMessage_length, NOMDENTRIES, 0, MDEntriesSequence_PMap_length, 0);
+	NoMDEntries = byteDecoder32(aux, fieldLength(aux));
+	printf(" NoMDEntries: %d \n", NoMDEntries);
 
-	/*for(int i = 0; i < FASTMessage_length; i++){
-    	field[field_length] = FASTMessage[i];
-    	field_length++;
+	if(NoMDEntries > 0){ //sequence
+		aux = getField(field, aux_FASTMessage, FASTMessage_length, MDENTRIESSEQUENCE_PMAP, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, 0);
+		printf(" MDEntriesSequence_PMap: %d \n", byteDecoder32(aux, fieldLength(aux)));
 
-    	if((field[field_length-1] >> 7) & 0b00000001){
-
-    		alocate:
-
-    		if(noTemplateField == 3){
-				MsgSeqNum = byteDecoder32(field, field_length);
-				printf(" MsgSeqNum: %d \n", MsgSeqNum);
-				fieldAlocated = 1; //true
-			}
-
-			else if(noTemplateField == 4){
-				printf(" SendingTime: ");
-				for(int i=0; i < field_length; i++){
-					printf("%02x ", (unsigned int) field[i]); 				
-				}
-				printf("\n");
-				fieldAlocated = 1; //true
-			}
-
-			else if(noTemplateField == 5){ 
-				TradeDate = byteDecoder32(field, field_length);
-				printf(" TradeDate: %d \n", TradeDate);
-				fieldAlocated = 1; //true
-			}
-
-			else if(noTemplateField == 6){ 
-				NoMDEntries = byteDecoder32(field, field_length);
-				printf(" NoMDEntries: %d \n", NoMDEntries);
-				fieldAlocated = 1; //true
-			}
-
-			else if(noTemplateField == 7){ 
-				MDEntriesSequence_PMap = byteDecoder32(field, field_length);
-				printf(" MDEntriesSequence_PMap: %d \n", MDEntriesSequence_PMap);
-				MDEntriesSequence_PMap_length = field_length;
-				printf(" MDEntriesSequence_PMap_length: %d \n", MDEntriesSequence_PMap_length);
-				fieldAlocated = 1; //true
-			}
-
-			else if(noTemplateField == 1 || noTemplateField == 2){
-				fieldAlocated = 1; //false
-			}
-
-			else{
-				printf(" field: ");
-				for(int i=0; i < field_length; i++){
-					printf("%02x ", (unsigned int) field[i]); 
-				}
-				printf("\n");
-			}
-
-			noTemplateField++;
-			if(fieldAlocated == 0){
-				goto alocate;
-			}
-			field_length = 0;
+		aux = getField(field, aux_FASTMessage, FASTMessage_length, MDUPDATEACTION, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, 1);
+		printf(" MDUpdateAction: ");
+		while(*aux){
+			printf( " %02x", (unsigned int) *aux++);
 		}
-	}*/
+		printf("\n");
 
-	
-
-	//for(int i = 0; i < 23; i++){
-
-	/*	__uint8_t* test = getField(newField, FASTMessage, FASTMessage_length, 5, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, 0);
-
-		//printf(" \n fieldLength: %d \n", fieldLength(test));
-		printf(" \n Testão: %d \n", byteDecoder32(test, strlen(test)));
-
-		printf(" \n newField test: ");
-		while(*test){
-			printf(" %02x", (unsigned int) *test++); // cast the character to an unsigned type to be safe
+		aux = getField(field, aux_FASTMessage, FASTMessage_length, MDENTRYTYPE, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, 2);
+		printf(" MDEntryType: ");
+		while(*aux){
+			printf( " %02x", (unsigned int) *aux++);
 		}
-		printf("\n");*/
-
-	//}
-		
-		
-	
+		printf("\n");
+	}
+	*/
 }
