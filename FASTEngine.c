@@ -784,6 +784,13 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t* FASTMessage, int FASTMessage
 		}
 	}
 
+	int newFieldCounter = 0;
+	//strcpy(newField, "");
+
+	for(int i = 0; i < 7000; i++){
+		newField[i] = 0x00;
+	}
+
 	for(int i = 0; i < FASTMessage_length; i++){
 		field[field_length] = FASTMessage[i];
     	field_length++;
@@ -791,7 +798,15 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t* FASTMessage, int FASTMessage
     	if((field[field_length-1] >> 7) & 0b00000001){
     		fieldCounter++;
     		if(fieldCounter == (templateOrder - zeroCounter)){ //TemplateOrderIndex
-	    		return FASTMessage + (i - field_length + 1);
+    			printf(" \n newField: ");
+    			for(int j = 0; j < i - ((i - field_length)); j++){
+    				newField[j] = FASTMessage[(i - field_length + 1) + j];
+    				newFieldCounter++;
+    				printf(" %02x", newField[j]);
+    			}
+    			printf("\n");
+	    		//return FASTMessage + (i - field_length + 1);
+	    		return newField;
     		}
     		field_length = 0;
     	}
@@ -876,13 +891,19 @@ void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_leng
 		}
 	}
 
-	__uint8_t newField[7000];
+	__uint8_t newField[7000] = {0x80};
 
-	__uint8_t* test = (getField(newField, FASTMessage, FASTMessage_length, 7, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length));
+	for(int i = 0; i < 23; i++){
 
-	printf(" Ptr: %02x \n", *test);
+		__uint8_t* test = getField(newField, FASTMessage, FASTMessage_length, i+1, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length);
 
-	while(*test){
-		printf(" %02x", (unsigned int) *test++); // cast the character to an unsigned type to be safe
+
+		printf(" \n newField test: ");
+		while(*test){
+			printf(" %02x", (unsigned int) *test++); // cast the character to an unsigned type to be safe
+		}
+		printf("\n");
+
 	}
+	
 }
