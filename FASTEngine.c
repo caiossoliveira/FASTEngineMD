@@ -767,14 +767,18 @@ FILE* openFile(char* fileName) {
    return file;
 }
 
-__uint8_t* getField(__uint8_t* newField, __uint8_t* FASTMessage, int FASTMessage_length, int templateOrder, __uint32_t PMap, unsigned int PMap_length){
+int fieldLength(__uint8_t* field){
+	int counter = 0;
+	while(*field){
+		counter++;
+	}
+	return counter;
+}
+
+__uint8_t* getField(__uint8_t* newField, __uint8_t* FASTMessage, int FASTMessage_length, int templateOrder, __uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order){
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
 	__uint8_t field[7000];
-    int field_length = 0, zeroCounter = 0, fieldCounter = 0, PMapOrder = 0;
-
-	if(templateOrder == 13){
-		PMapOrder = 6;
-	}
+    int field_length = 0, zeroCounter = 0, fieldCounter = 0, PMapOrder = 0, newFieldCounter = 0;
 
 	if(PMapOrder > 0){
 		for(int i = 1; i <= PMapOrder; i++){
@@ -784,9 +788,6 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t* FASTMessage, int FASTMessage
 		}
 	}
 
-	int newFieldCounter = 0;
-	//strcpy(newField, "");
-
 	for(int i = 0; i < 7000; i++){
 		newField[i] = 0x00;
 	}
@@ -794,18 +795,13 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t* FASTMessage, int FASTMessage
 	for(int i = 0; i < FASTMessage_length; i++){
 		field[field_length] = FASTMessage[i];
     	field_length++;
-
     	if((field[field_length-1] >> 7) & 0b00000001){
     		fieldCounter++;
     		if(fieldCounter == (templateOrder - zeroCounter)){ //TemplateOrderIndex
-    			printf(" \n newField: ");
     			for(int j = 0; j < i - ((i - field_length)); j++){
     				newField[j] = FASTMessage[(i - field_length + 1) + j];
     				newFieldCounter++;
-    				printf(" %02x", newField[j]);
     			}
-    			printf("\n");
-	    		//return FASTMessage + (i - field_length + 1);
 	    		return newField;
     		}
     		field_length = 0;
@@ -814,6 +810,10 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t* FASTMessage, int FASTMessage
 }
 
 void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length){
+	#define MSGSEQNUM 3
+	#define SENDINGTIME 4
+	#define TRADEDATE5
+
 	__uint8_t field[7000];
 	unsigned int field_length = 0;
 	unsigned int MDEntriesSequence_PMap_length = 0;
@@ -828,7 +828,14 @@ void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_leng
 	__uint32_t MDEntriesSequence_PMap = 0;
 	__uint32_t MDUpdateAction = 1;
 
-	for(int i = 0; i < FASTMessage_length; i++){
+	__uint8_t newField[7000] = {0x80};
+
+	__uint8_t* test = getField(newField, FASTMessage, FASTMessage_length, MSGSEQNUM, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, 0);
+
+	//printf(" \n fieldLength: %d \n", fieldLength(test));
+	printf(" \n MsgSeqNum: %d \n", byteDecoder32(test, strlen(test)));
+
+	/*for(int i = 0; i < FASTMessage_length; i++){
     	field[field_length] = FASTMessage[i];
     	field_length++;
 
@@ -889,21 +896,25 @@ void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_leng
 			}
 			field_length = 0;
 		}
-	}
+	}*/
 
-	__uint8_t newField[7000] = {0x80};
+	
 
-	for(int i = 0; i < 23; i++){
+	//for(int i = 0; i < 23; i++){
 
-		__uint8_t* test = getField(newField, FASTMessage, FASTMessage_length, i+1, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length);
+	/*	__uint8_t* test = getField(newField, FASTMessage, FASTMessage_length, 5, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, 0);
 
+		//printf(" \n fieldLength: %d \n", fieldLength(test));
+		printf(" \n Testão: %d \n", byteDecoder32(test, strlen(test)));
 
 		printf(" \n newField test: ");
 		while(*test){
 			printf(" %02x", (unsigned int) *test++); // cast the character to an unsigned type to be safe
 		}
-		printf("\n");
+		printf("\n");*/
 
-	}
+	//}
+		
+		
 	
 }
