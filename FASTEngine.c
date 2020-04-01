@@ -767,25 +767,20 @@ FILE* openFile(char* fileName) {
    return file;
 }
 
-__uint8_t* getField(__uint8_t* FASTMessage, int FASTMessage_length, int templateOrder, __uint32_t PMap, unsigned int PMap_length){
-	__uint32_t aux_bitMap = 0b00000000000000000000000000000001;
+__uint8_t* getField(__uint8_t* newField, __uint8_t* FASTMessage, int FASTMessage_length, int templateOrder, __uint32_t PMap, unsigned int PMap_length){
+	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
 	__uint8_t field[7000];
-	unsigned int field_length = 0;
-	int zeroCounter=0;
-	int fieldCounter=0;
-	int PMapOrder = 9;
-	int noCurrentField=5;
-
-	printf(" MDEntriesSequence_PMap: %d \n", PMap);
-	printf(" PMap_length: %d \n", PMap_length);
+    int field_length = 0, zeroCounter = 0, fieldCounter = 0, PMapOrder = 0;
 
 	if(templateOrder == 13){
 		PMapOrder = 6;
 	}
 
-	for(int i = 1; i <= PMapOrder; i++){
-		if(!(pMapCheck(PMap, PMap_length, i))){
-			zeroCounter++;
+	if(PMapOrder > 0){
+		for(int i = 1; i <= PMapOrder; i++){
+			if(!(pMapCheck(PMap, PMap_length, i))){
+				zeroCounter++;
+			}
 		}
 	}
 
@@ -795,9 +790,10 @@ __uint8_t* getField(__uint8_t* FASTMessage, int FASTMessage_length, int template
 
     	if((field[field_length-1] >> 7) & 0b00000001){
     		fieldCounter++;
-    		if(fieldCounter == (templateOrder - zeroCounter)){
-    			printf(" Ptr: %02x \n", FASTMessage[fieldCounter+2]); //+1: ed e +2: 09
+    		if(fieldCounter == (templateOrder - zeroCounter)){ //TemplateOrderIndex
+	    		return FASTMessage + (i - field_length + 1);
     		}
+    		field_length = 0;
     	}
 	}
 }
@@ -865,7 +861,6 @@ void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_leng
 			}
 
 			else{
-				//fieldAlocated = 0; //false
 				printf(" field: ");
 				for(int i=0; i < field_length; i++){
 					printf("%02x ", (unsigned int) field[i]); 
@@ -881,5 +876,13 @@ void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_leng
 		}
 	}
 
-	getField(FASTMessage, FASTMessage_length, 13, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length);
+	__uint8_t newField[7000];
+
+	__uint8_t* test = (getField(newField, FASTMessage, FASTMessage_length, 7, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length));
+
+	printf(" Ptr: %02x \n", *test);
+
+	while(*test){
+		printf(" %02x", (unsigned int) *test++); // cast the character to an unsigned type to be safe
+	}
 }
