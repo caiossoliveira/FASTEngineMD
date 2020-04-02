@@ -780,10 +780,11 @@ int fieldLength(__uint8_t* field){
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, int templateOrder, __uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order){
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
 	__uint8_t field[7000];
-    int field_length = 0, zeroCounter = 0, fieldCounter = 0, PMapOrder = 0, newFieldCounter = 0;
+    int field_length = 0, zeroCounter = 0, fieldCounter = 0, newFieldCounter = 0;
 
-	if(PMapOrder > 0){
-		for(int i = 1; i <= PMapOrder; i++){
+	if(PMap_order > 0){
+		//*FASTMessage = *FASTMessage+1;
+		for(int i = 1; i <= PMap_order - 1; i++){
 			if(!(pMapCheck(PMap, PMap_length, i))){
 				zeroCounter++;
 			}
@@ -811,30 +812,7 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
     }
 }
 
-
-void test2(int** field){
-	*field = *field+1;
-}
-
 void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length){
-	
-	/*int vet[3] = {3, 7, 9};
-	int* ptr = vet;
-
-	printf("\n ptrvet 1 - test: %d ", ptr[0]);
-	test2(&ptr);
-	printf("\n ptrvet 2 - test: %d \n\n\n", ptr[0]);*/
-
-	__uint8_t aux_FASTMessage[7000];
-
-	for(int i = 0; i < 7000; i++){
-		aux_FASTMessage[i] = FASTMessage[i];
-	}
-
-	/*printf("\n 1: %02x", FASTMessage[0]);
-	test2(FASTMessage);
-	printf("\n 2: %02x \n", FASTMessage[0]);*/
-
 	
 	#define MSGSEQNUM 3
 	#define SENDINGTIME 4
@@ -848,14 +826,14 @@ void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_leng
 	#define QUOTECONDITION 5
 	#define MDENTRYPX 6
 
-	//__uint8_t aux_FASTMessage = FASTMessage;
-	__uint8_t* ptr_FASTMessage = FASTMessage;
-
+	__uint8_t aux_FASTMessage[7000];
 	for(int i = 0; i < 7000; i++){
 		aux_FASTMessage[i] = FASTMessage[i];
 	}
+	__uint8_t* ptr_FASTMessage = FASTMessage;
 
 	__uint8_t field[7000] = {0x80};
+	
 	unsigned int MDEntriesSequence_PMap_length = 0;
 
 	__uint32_t MsgSeqNum = 0, TradeDate = 0;
