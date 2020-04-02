@@ -777,7 +777,7 @@ int fieldLength(__uint8_t* field){
 	return counter;
 }
 
-__uint8_t* getField(__uint8_t* newField, __uint8_t* FASTMessage, int FASTMessage_length, int templateOrder, __uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order){
+__uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, int templateOrder, __uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order){
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
 	__uint8_t field[7000];
     int field_length = 0, zeroCounter = 0, fieldCounter = 0, PMapOrder = 0, newFieldCounter = 0;
@@ -795,41 +795,47 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t* FASTMessage, int FASTMessage
 	}
 
 	for(int i = 0; i < FASTMessage_length; i++){
-		field[field_length] = FASTMessage[i];
+		field[field_length] = *(*FASTMessage + i);
     	field_length++;
     	if((field[field_length-1] >> 7) & 0b00000001){
     		fieldCounter++;
-    		if(fieldCounter == (templateOrder - zeroCounter)){
+    		if(fieldCounter == (templateOrder - zeroCounter)){ //TemplateOrderIndex
     			for(int j = 0; j < i - ((i - field_length)); j++){
-    				newField[j] = FASTMessage[(i - field_length + 1) + j];
+    				newField[j] = *(*FASTMessage+((i - field_length + 1) + j));
     				newFieldCounter++;
-    			}
-
-    			for(int z = 0; z < i; z++){
-    				*FASTMessage++;
     			}
 	    		return newField;
     		}
     		field_length = 0;
     	}
-	}
+    }
 }
 
-void test2(int* field){
-	*field = (*field)+1;
-	//return counter;
+
+void test2(int** field){
+	*field = *field+1;
 }
 
 void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length){
+	
+	/*int vet[3] = {3, 7, 9};
+	int* ptr = vet;
 
-	int num = 4;
-	int* ptr = &num;
+	printf("\n ptrvet 1 - test: %d ", ptr[0]);
+	test2(&ptr);
+	printf("\n ptrvet 2 - test: %d \n\n\n", ptr[0]);*/
 
-	printf("\n ptr1: %d ", num);
-	test2(ptr);
-	printf("\n ptr2: %d ", num);
+	__uint8_t aux_FASTMessage[7000];
 
-	/*
+	for(int i = 0; i < 7000; i++){
+		aux_FASTMessage[i] = FASTMessage[i];
+	}
+
+	/*printf("\n 1: %02x", FASTMessage[0]);
+	test2(FASTMessage);
+	printf("\n 2: %02x \n", FASTMessage[0]);*/
+
+	
 	#define MSGSEQNUM 3
 	#define SENDINGTIME 4
 	#define TRADEDATE 5
@@ -843,7 +849,7 @@ void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_leng
 	#define MDENTRYPX 6
 
 	//__uint8_t aux_FASTMessage = FASTMessage;
-	__uint8_t aux_FASTMessage[7000];
+	__uint8_t* ptr_FASTMessage = FASTMessage;
 
 	for(int i = 0; i < 7000; i++){
 		aux_FASTMessage[i] = FASTMessage[i];
@@ -860,38 +866,37 @@ void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_leng
 	__uint32_t MDEntriesSequence_PMap = 0;
 	__uint32_t MDUpdateAction = 1;
 
-	__uint8_t* aux = getField(field, aux_FASTMessage, FASTMessage_length, MSGSEQNUM, 0, MDEntriesSequence_PMap_length, 0);
+	__uint8_t* aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MSGSEQNUM, 0, MDEntriesSequence_PMap_length, 0);
 	MsgSeqNum = byteDecoder32(aux, fieldLength(aux));
 	printf("\n MsgSeqNum: %d \n", MsgSeqNum);
 
-	aux = getField(field, aux_FASTMessage, FASTMessage_length, SENDINGTIME, 0, MDEntriesSequence_PMap_length, 0);
+	aux = getField(field, &ptr_FASTMessage, FASTMessage_length, SENDINGTIME, 0, MDEntriesSequence_PMap_length, 0);
 	printf(" SendintTime: ");
 	while(*aux){
 		printf( " %02x", (unsigned int) *aux++);
 	}
 	printf("\n");
 
-	aux = getField(field, aux_FASTMessage, FASTMessage_length, NOMDENTRIES, 0, MDEntriesSequence_PMap_length, 0);
+	aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NOMDENTRIES, 0, MDEntriesSequence_PMap_length, 0);
 	NoMDEntries = byteDecoder32(aux, fieldLength(aux));
 	printf(" NoMDEntries: %d \n", NoMDEntries);
 
 	if(NoMDEntries > 0){ //sequence
-		aux = getField(field, aux_FASTMessage, FASTMessage_length, MDENTRIESSEQUENCE_PMAP, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, 0);
+		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDENTRIESSEQUENCE_PMAP, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, 0);
 		printf(" MDEntriesSequence_PMap: %d \n", byteDecoder32(aux, fieldLength(aux)));
 
-		aux = getField(field, aux_FASTMessage, FASTMessage_length, MDUPDATEACTION, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, 1);
+		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDUPDATEACTION, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, 1);
 		printf(" MDUpdateAction: ");
 		while(*aux){
 			printf( " %02x", (unsigned int) *aux++);
 		}
 		printf("\n");
 
-		aux = getField(field, aux_FASTMessage, FASTMessage_length, MDENTRYTYPE, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, 2);
+		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDENTRYTYPE, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, 2);
 		printf(" MDEntryType: ");
 		while(*aux){
 			printf( " %02x", (unsigned int) *aux++);
 		}
 		printf("\n");
 	}
-	*/
 }
