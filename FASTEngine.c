@@ -779,44 +779,54 @@ int fieldLength(__uint8_t* field){
 
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, int templateOrder, __uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order){
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
-	__uint8_t field[7000];
-    int field_length = 0, zeroCounter = 0, fieldCounter = 0, newFieldCounter = 0;
+    int field_length = 0, zeroCounter = 0;
 
-	if(PMap_order > 0){
-		//*FASTMessage = *FASTMessage+1;
+	/*if(PMap_order > 0){
 		for(int i = 1; i <= PMap_order - 1; i++){
 			if(!(pMapCheck(PMap, PMap_length, i))){
 				zeroCounter++;
 			}
 		}
-	}
+	}*/
 
 	for(int i = 0; i < 7000; i++){
 		newField[i] = 0x00;
 	}
 
 	for(int i = 0; i < FASTMessage_length; i++){
-		field[field_length] = *(*FASTMessage + i);
+		//field[field_length] = *(*FASTMessage + i);
+		newField[field_length] = *(*FASTMessage);
     	field_length++;
-    	if((field[field_length-1] >> 7) & 0b00000001){
-    		fieldCounter++;
-    		if(fieldCounter == (templateOrder - zeroCounter)){ //TemplateOrderIndex
-    			for(int j = 0; j < i - ((i - field_length)); j++){
-    				newField[j] = *(*FASTMessage+((i - field_length + 1) + j));
-    				newFieldCounter++;
+    	*FASTMessage = *FASTMessage+1;
+    	if((newField[field_length-1] >> 7) & 0b00000001){
+    		//fieldCounter++;
+    		//if(fieldCounter == (templateOrder - zeroCounter)){ //TemplateOrderIndex
+    			//for(int j = 0; j < i - ((i - field_length)); j++){
+    			//	newField[j] = *(*FASTMessage+((i - field_length + 1) + j));
+    			//	newFieldCounter++;
+    			//}
+    			/*printf(" Field: \n ");
+    			for(int z = 0; z < field_length; z++){
+    				printf("%02x ", newField[z]);
     			}
+    			printf("\n");*/
+
 	    		return newField;
-    		}
+    		//}
     		field_length = 0;
     	}
     }
 }
 
+void test2(__uint8_t** FASTMessage){
+		*FASTMessage = *FASTMessage+5;
+}
+
 void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length){
 	
 	#define MSGSEQNUM 3
-	#define SENDINGTIME 4
-	#define TRADEDATE 5
+	#define SENDINGTIME 1
+	#define TRADEDATE 1
 	#define NOMDENTRIES 6 //SequenceMDEntries
 	#define MDENTRIESSEQUENCE_PMAP 7
 	#define MDUPDATEACTION 1
@@ -830,7 +840,7 @@ void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_leng
 	for(int i = 0; i < 7000; i++){
 		aux_FASTMessage[i] = FASTMessage[i];
 	}
-	__uint8_t* ptr_FASTMessage = FASTMessage;
+	__uint8_t* ptr_FASTMessage = FASTMessage+3; //MsgSeqNum is the first here but the third in the message
 
 	__uint8_t field[7000] = {0x80};
 	
@@ -844,9 +854,20 @@ void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_leng
 	__uint32_t MDEntriesSequence_PMap = 0;
 	__uint32_t MDUpdateAction = 1;
 
+	/*__uint8_t test = *(ptr_FASTMessage);
+	printf(" Ptr1: %02x", test);
+	for(int i = 0; i < 10; i++){
+		test = *ptr_FASTMessage;
+		printf(" Ptr%d: %02x", i+1, test);
+		__uint8_t* aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MSGSEQNUM, 0, MDEntriesSequence_PMap_length, 0);
+		//ptr_FASTMessage++;
+		//test2(&ptr_FASTMessage);
+	}*/
+
 	__uint8_t* aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MSGSEQNUM, 0, MDEntriesSequence_PMap_length, 0);
 	MsgSeqNum = byteDecoder32(aux, fieldLength(aux));
 	printf("\n MsgSeqNum: %d \n", MsgSeqNum);
+
 
 	aux = getField(field, &ptr_FASTMessage, FASTMessage_length, SENDINGTIME, 0, MDEntriesSequence_PMap_length, 0);
 	printf(" SendintTime: ");
@@ -859,7 +880,7 @@ void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_leng
 	NoMDEntries = byteDecoder32(aux, fieldLength(aux));
 	printf(" NoMDEntries: %d \n", NoMDEntries);
 
-	if(NoMDEntries > 0){ //sequence
+	/*if(NoMDEntries > 0){ //sequence
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDENTRIESSEQUENCE_PMAP, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, 0);
 		printf(" MDEntriesSequence_PMap: %d \n", byteDecoder32(aux, fieldLength(aux)));
 
@@ -876,5 +897,5 @@ void test(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_leng
 			printf( " %02x", (unsigned int) *aux++);
 		}
 		printf("\n");
-	}
+	}*/
 }
