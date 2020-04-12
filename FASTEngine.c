@@ -66,6 +66,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	__uint32_t RptSeq = 0, NumberOfOrders = 0, MDEntryTime = 0, MDEntryDate = 0, MDInsertDate = 0, MDInsertTime = 0;
 	__uint32_t SellerDays = 0, TradingSessionID = 0, OpenCloseSettlFlag = 0, MDEntryPositionNo = 0, SettPriceType = 0;
 	__uint32_t LastTradeDate = 0, PriceAdjustmentMethod = 0, PriceLimitType = 0, PriceBandMidpointPriceType = 0;
+	float MDEntryPx = 0.0;
 	//SequenceUnderlyings
 	__uint32_t NoUnderlyings = 0;
 	__uint32_t UnderlyingPXType = 0;
@@ -129,11 +130,8 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		printf("\n");
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPX, MDEntriesSequence_PMap_length);
-		printf(" MDEntryPx: ");
-		while(*aux){
-			printf( " %02x", (unsigned int) *aux++);
-		}
-		printf("\n");
+		MDEntryPx = (byteDecoder32(aux, fieldLength(aux)) * 0.01);
+		printf(" MDEntryPx: %.3f \n", MDEntryPx);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYINTERESTRATE, MDEntriesSequence_PMap_length);
 		printf(" MDEntryInterestRate: ");
@@ -454,7 +452,7 @@ void readMessage(FILE* file){
 	int MsgLength = 0;
 
 	//while(fread(&byte, 1, 1, file) > 0){
-	for(int i = 0; i < 1171; i++){ // number of messages //1250
+	for(int i = 0; i < 1250; i++){ // number of messages //1250
 		printf(" Message %d:    ----------------------------------------------------------\n", i+1);
 		for(int i = 0; i < 10; i++){ //read header
 			fread(&byte, 1, 1, file);
@@ -497,8 +495,13 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
 
 	if(PMap_order > 0){
 		if(!(pMapCheck(PMap, PMap_length, PMap_order))){
-			newField[0] = 0x00;
-			return newField;
+			if(PMap_order == MDENTRYPX){
+				1+1;
+			}
+			else{
+				newField[0] = 0x95;
+				return newField;
+			}
 		}
 	}
 
@@ -508,7 +511,7 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
     	*FASTMessage = *FASTMessage+1;
     	if((newField[field_length-1] >> 7) & 0b00000001){
 	    	return newField;
-    		field_length = 0;
+    		//field_length = 0;
     	}
     }
 }
