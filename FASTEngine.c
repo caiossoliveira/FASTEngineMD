@@ -3,9 +3,10 @@
 //#include "t145toFIX.h"
  
 FILE* openFile(char* fileName);
-__uint32_t bytetoPMapDecoder(__uint8_t* field, __int32_t field_length);
+float bytetoDecimalDecoder(__uint8_t* field);
 __uint32_t bytetoInt32Decoder(__uint8_t* field);
 __uint64_t bytetoInt64Decoder(__uint8_t* field);
+__uint32_t bytetoPMapDecoder(__uint8_t* field, __int32_t field_length);
 char* bytetoStringDecoder(__uint8_t* field, __int32_t field_length);
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length);
 __uint32_t fieldLength(__uint8_t* field);
@@ -73,7 +74,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	__uint32_t LastTradeDate = 0, PriceAdjustmentMethod = 0, PriceLimitType = 0, PriceBandMidpointPriceType = 0;
 	__uint64_t SecurityID = 0, MDEntrySize = 0, TradeVolume = 0, AvgDailyTradedQty = 0, ExpireDate = 0, EarlyTermination = 0;
 	__uint64_t MaxTradeVol = 0;
-	
+
 	char* MDEntryType; 
 	char* QuoteCondition;
 	char* PriceType;
@@ -135,7 +136,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		printf(" QuoteCondition: %s \n", QuoteCondition);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPX, MDEntriesSequence_PMap_length);
-		MDEntryPx = 16.99; //(bytetoInt32Decoder(aux, fieldLength(aux)) * 0.01);
+		MDEntryPx = bytetoDecimalDecoder(aux); //bytetoInt32Decoder(aux) * 0.01;
 		printf(" MDEntryPx: %.2f \n", MDEntryPx);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYINTERESTRATE, MDEntriesSequence_PMap_length);
@@ -479,6 +480,30 @@ int isDecimal(unsigned int PMap_order){
 		case MDENTRYPX : return 1;
 		default : return 0;
 	}
+}
+
+float bytetoDecimalDecoder(__uint8_t* field){
+    __int32_t field_length = fieldLength(field);
+    int j = field_length - 2;
+    __uint32_t result;
+    float value = 0.0;
+    
+    result = field[field_length-1];
+
+    if(field_length == 1){ //to do not get negative adds
+    	field_length = 2;
+    }
+    
+    for(int i = 0; i < field_length - 1; i++){
+        result = result << 33 - ((i + 1) * 8); //save only the 7 LSB in a 32 bits buffer
+        result = result >> 32 - ((i + 1) * 8); // ´´
+        result = (field[j] << ((i + 1) * 8)) | result; //concat with the next byte
+        j--;
+    } 
+
+    result = result >> (field_length-1); 
+    value = result * 0.01;
+    return value;
 }
 
 __uint32_t bytetoInt32Decoder(__uint8_t* field){
