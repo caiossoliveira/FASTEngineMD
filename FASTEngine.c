@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <string.h>
+//#include "t145toFIX.h"
  
 FILE* openFile(char* fileName);
-__uint32_t byteDecoder32(__uint8_t* field, __int32_t field_length);
+__uint32_t bytetoInt32Decoder(__uint8_t* field, __int32_t field_length);
+char* bytetoStringDecoder(__uint8_t* field, __int32_t field_length);
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length);
 __uint32_t fieldLength(__uint8_t* field);
 int pMapCheck(__uint32_t PMap, unsigned int PMap_length, __uint32_t noCurrentField);
@@ -66,6 +68,18 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	__uint32_t RptSeq = 0, NumberOfOrders = 0, MDEntryTime = 0, MDEntryDate = 0, MDInsertDate = 0, MDInsertTime = 0;
 	__uint32_t SellerDays = 0, TradingSessionID = 0, OpenCloseSettlFlag = 0, MDEntryPositionNo = 0, SettPriceType = 0;
 	__uint32_t LastTradeDate = 0, PriceAdjustmentMethod = 0, PriceLimitType = 0, PriceBandMidpointPriceType = 0;
+	char* MDEntryType; 
+	char* QuoteCondition;
+	char* PriceType;
+	char* MDStreamID;
+	char* Currency;
+	char* TickDirection;
+	char* TradeCondition;
+	char* OrderID; //yes
+	char* TradeID;
+	char* MDEntryBuyer; //yes
+	char* MDEntrySeller;
+	char* PriceBandType;
 	float MDEntryPx = 0.0;
 	//SequenceUnderlyings
 	__uint32_t NoUnderlyings = 0;
@@ -73,7 +87,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 
 
 	__uint8_t* aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-	MsgSeqNum = byteDecoder32(aux, fieldLength(aux));
+	MsgSeqNum = bytetoInt32Decoder(aux, fieldLength(aux));
 	printf("\n MsgSeqNum: %d \n", MsgSeqNum);
 
 	aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
@@ -84,32 +98,26 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	printf("\n");
 
 	aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-	TradeDate = byteDecoder32(aux, fieldLength(aux));
+	TradeDate = bytetoInt32Decoder(aux, fieldLength(aux));
 	printf(" TradeDate: %d \n", TradeDate);
 
 	aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-	NoMDEntries = byteDecoder32(aux, fieldLength(aux));
+	NoMDEntries = bytetoInt32Decoder(aux, fieldLength(aux));
 	printf(" NoMDEntries: %d \n", NoMDEntries);
 
 	if(NoMDEntries > 0){ //sequence
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		MDEntriesSequence_PMap = byteDecoder32(aux, fieldLength(aux));
+		MDEntriesSequence_PMap = bytetoInt32Decoder(aux, fieldLength(aux));
 		MDEntriesSequence_PMap_length = fieldLength(aux);
 		printf(" MDEntriesSequence_PMap: %d \n", MDEntriesSequence_PMap);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDUPDATEACTION, MDEntriesSequence_PMap_length);
-		printf(" MDUpdateAction: ");
-		while(*aux){
-			printf( " %02x", (unsigned int) *aux++);
-		}
-		printf("\n");
+		MDUpdateAction = bytetoInt32Decoder(aux, fieldLength(aux));
+		printf(" MDUpdateAction: %d \n", MDUpdateAction);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYTYPE, MDEntriesSequence_PMap_length);
-		printf(" MDEntryType: ");
-		while(*aux){
-			printf( " %02x", (unsigned int) *aux++);
-		}
-		printf("\n");
+		MDEntryType = bytetoStringDecoder(aux, fieldLength(aux));
+		printf(" MDEntryType: %s \n", MDEntryType);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, SECURITYID, MDEntriesSequence_PMap_length);
 		printf(" SecurityID: ");
@@ -119,18 +127,15 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		printf("\n");
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, RPTSEQ, MDEntriesSequence_PMap_length);
-		RptSeq = byteDecoder32(aux, fieldLength(aux));
+		RptSeq = bytetoInt32Decoder(aux, fieldLength(aux));
 		printf(" RptSeq: %d \n", RptSeq);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, QUOTECONDITION, MDEntriesSequence_PMap_length);
-		printf(" QuoteCondition: ");
-		while(*aux){
-			printf( " %02x", (unsigned int) *aux++);
-		}
-		printf("\n");
+		QuoteCondition = bytetoStringDecoder(aux, fieldLength(aux));
+		printf(" QuoteCondition: %s \n", QuoteCondition);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPX, MDEntriesSequence_PMap_length);
-		MDEntryPx = (byteDecoder32(aux, fieldLength(aux)) * 0.01);
+		MDEntryPx = (bytetoInt32Decoder(aux, fieldLength(aux)) * 0.01);
 		printf(" MDEntryPx: %.3f \n", MDEntryPx);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYINTERESTRATE, MDEntriesSequence_PMap_length);
@@ -141,15 +146,12 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		printf("\n");
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, NUMBEROFORDERS, MDEntriesSequence_PMap_length);
-		NumberOfOrders = byteDecoder32(aux, fieldLength(aux));
+		NumberOfOrders = bytetoInt32Decoder(aux, fieldLength(aux));
 		printf(" NumberOfOrders: %d \n", NumberOfOrders);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf(" PriceType: ");
-		while(*aux){
-			printf( " %02x", (unsigned int) *aux++);
-		}
-		printf("\n");
+		PriceType = bytetoStringDecoder(aux, fieldLength(aux));
+		printf(" PriceType: %s \n", PriceType);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYTIME, MDEntriesSequence_PMap_length);
 		printf(" EntryTime: ");
@@ -166,30 +168,24 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		printf("\n");
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYDATE, MDEntriesSequence_PMap_length);
-		MDEntryDate = byteDecoder32(aux, fieldLength(aux));
+		MDEntryDate = bytetoInt32Decoder(aux, fieldLength(aux));
 		printf(" MDEntryDate: %d \n", MDEntryDate);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDINSERTDATE, MDEntriesSequence_PMap_length);
-		MDInsertDate = byteDecoder32(aux, fieldLength(aux));
+		MDInsertDate = bytetoInt32Decoder(aux, fieldLength(aux));
 		printf(" MDInsertDate: %d \n", MDInsertDate);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDINSERTTIME, MDEntriesSequence_PMap_length);
-		MDInsertTime = byteDecoder32(aux, fieldLength(aux));
+		MDInsertTime = bytetoInt32Decoder(aux, fieldLength(aux));
 		printf(" MDInsertTime: %d \n", MDInsertTime);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDSTREAMID, MDEntriesSequence_PMap_length);
-		printf(" MDStreamID: ");
-		while(*aux){
-			printf( " %02x", (unsigned int) *aux++);
-		}
-		printf("\n");
+		MDStreamID = bytetoStringDecoder(aux, fieldLength(aux));
+		printf(" MDStreamID: %s \n", MDStreamID);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, CURRENCY, MDEntriesSequence_PMap_length);
-		printf(" Currency: ");
-		while(*aux){
-			printf( " %02x", (unsigned int) *aux++);
-		}
-		printf("\n");
+		Currency = bytetoStringDecoder(aux, fieldLength(aux));
+		printf(" Currency: %s \n", Currency);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, NETCHGPREVDAY, MDEntriesSequence_PMap_length);
 		printf(" NetChgPrevDay: ");
@@ -213,80 +209,59 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		printf("\n");
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, TICKDIRECTION, MDEntriesSequence_PMap_length);
-		printf(" TickDirection: ");
-		while(*aux){
-			printf( " %02x", (unsigned int) *aux++);
-		}
-		printf("\n");
+		TickDirection = bytetoStringDecoder(aux, fieldLength(aux));
+		printf(" TickDirection: %s \n", TickDirection);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf(" TradeCondition: ");
-		while(*aux){
-			printf( " %02x", (unsigned int) *aux++);
-		}
-		printf("\n");
+		TradeCondition = bytetoStringDecoder(aux, fieldLength(aux));
+		printf(" TradeCondition: %s \n", TradeCondition);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		TradingSessionID = byteDecoder32(aux, fieldLength(aux));
+		TradingSessionID = bytetoInt32Decoder(aux, fieldLength(aux));
 		printf(" TradingSessionID: %d \n", TradingSessionID);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		OpenCloseSettlFlag = byteDecoder32(aux, fieldLength(aux));
+		OpenCloseSettlFlag = bytetoInt32Decoder(aux, fieldLength(aux));
 		printf(" OpenCloseSettlFlag: %d \n", OpenCloseSettlFlag);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, ORDERID, MDEntriesSequence_PMap_length);
-		printf(" OrderID: ");
-		while(*aux){
-			printf( " %02x", (unsigned int) *aux++);
-		}
-		printf("\n");
+		OrderID = bytetoStringDecoder(aux, fieldLength(aux));
+		printf(" OrderID: %s \n", OrderID);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, TRADEID, MDEntriesSequence_PMap_length);
-		printf(" TradeID: ");
-		while(*aux){
-			printf( " %02x", (unsigned int) *aux++);
-		}
-		printf("\n");
+		TradeID = bytetoStringDecoder(aux, fieldLength(aux));
+		printf(" TradeID: %s \n", TradeID);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYBUYER, MDEntriesSequence_PMap_length);
-		printf(" MDEntryBuyer: ");
-		while(*aux){
-			printf( " %02x", (unsigned int) *aux++);
-		}
-		printf("\n");
+		MDEntryBuyer = bytetoStringDecoder(aux, fieldLength(aux));
+		printf(" MDEntryBuyer: %s \n", MDEntryBuyer);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYSELLER, MDEntriesSequence_PMap_length);
-		printf(" MDEntrySeller: ");
-		while(*aux){
-			printf( " %02x", (unsigned int) *aux++);
-		}
-		printf("\n");
+		MDEntrySeller = bytetoStringDecoder(aux, fieldLength(aux));
+		printf(" MDEntrySeller: %s \n", MDEntrySeller);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPOSITIONNO, MDEntriesSequence_PMap_length);
-		MDEntryPositionNo = byteDecoder32(aux, fieldLength(aux));
+		MDEntryPositionNo = bytetoInt32Decoder(aux, fieldLength(aux));
 		printf(" MDEntryPositionNo: %d \n", MDEntryPositionNo);		
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		SettPriceType = byteDecoder32(aux, fieldLength(aux));
+		SettPriceType = bytetoInt32Decoder(aux, fieldLength(aux));
 		printf(" SettPriceType: %d \n", SettPriceType);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		LastTradeDate = byteDecoder32(aux, fieldLength(aux));
+		LastTradeDate = bytetoInt32Decoder(aux, fieldLength(aux));
 		printf(" LastTradeDate: %d \n", LastTradeDate);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		PriceAdjustmentMethod = byteDecoder32(aux, fieldLength(aux));
+		PriceAdjustmentMethod = bytetoInt32Decoder(aux, fieldLength(aux));
 		printf(" PriceAdjustmentMethod: %d \n", PriceAdjustmentMethod);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, PRICEBANDTYPE, MDEntriesSequence_PMap_length);
-		printf(" PriceBandType: ");
-		while(*aux){
-			printf( " %02x", (unsigned int) *aux++);
-		}
-		printf("\n");
+		PriceBandType = bytetoStringDecoder(aux, fieldLength(aux));
+		printf(" PriceBandType: %s \n", PriceBandType);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, PRICELIMITTYPE, MDEntriesSequence_PMap_length);
-		PriceAdjustmentMethod = byteDecoder32(aux, fieldLength(aux));
+		PriceAdjustmentMethod = bytetoInt32Decoder(aux, fieldLength(aux));
 		printf(" PriceLimitType: %d \n", PriceLimitType);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, LOWLIMITPRICE, MDEntriesSequence_PMap_length);
@@ -311,7 +286,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		printf("\n");
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		PriceAdjustmentMethod = byteDecoder32(aux, fieldLength(aux));
+		PriceAdjustmentMethod = bytetoInt32Decoder(aux, fieldLength(aux));
 		printf(" PriceBandMidpointPriceType: %d \n", PriceBandMidpointPriceType);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
@@ -343,7 +318,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		printf("\n");
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		NoUnderlyings = byteDecoder32(aux, fieldLength(aux));
+		NoUnderlyings = bytetoInt32Decoder(aux, fieldLength(aux));
 		printf(" NoUnderlyings: %d \n", NoUnderlyings);
 
 		if(NoUnderlyings > 0){}
@@ -355,6 +330,19 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		}
 		printf("\n");
 	}
+
+	/*t145toFIX(
+		//Template
+		MsgSeqNum, TradeDate, SendintTime,
+		//SequenceMDEntries
+		NoMDEntries, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDUpdateAction,
+		RptSeq, NumberOfOrders, MDEntryTime, MDEntryDate, MDInsertDate, MDInsertTime,
+		SellerDays, TradingSessionID, OpenCloseSettlFlag, MDEntryPositionNo, SettPriceType,
+		LastTradeDate, PriceAdjustmentMethod, PriceLimitType, PriceBandMidpointPriceType,
+		MDEntryPx,
+		//SequenceUnderlyings
+		NoUnderlyings, UnderlyingPXType
+	);*/
 }
 
 void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
@@ -372,7 +360,7 @@ void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
     	if((field[field_length-1] >> 7) & 0b00000001){
     		noTemplateField++;
     		if(noTemplateField == 3){ //&& (pmap >><< fieldOrder)
-				MsgSeqNum = byteDecoder32(field, field_length);
+				MsgSeqNum = bytetoInt32Decoder(field, field_length);
 				printf(" MsgSeqNum: %d \n", MsgSeqNum);
 			}
 			else if(noTemplateField == 4){
@@ -418,17 +406,17 @@ void identifyTemplate(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
     	field[field_length] = FASTMessage[i];
     	field_length++;
 
-    	if((field[field_length-1] >> 7) & 0b00000001){
+    	if((field[field_length-1] >> 7) & 0b00000001){ //if MSB is 1
     		noCurrentField++;
     		if(noCurrentField == 1){
-    			PMap = byteDecoder32(field, field_length);
+    			PMap = bytetoInt32Decoder(field, field_length);
 				printf(" PMap: %02x \n", PMap);
 				if(!(PMap & 0b01000000)){
 					printf(" TemplateID do not specified in the message. \n");
 				}
 			}
 			else if(noCurrentField == 2 && (PMap & 0b01000000)){
-				TemplateID = byteDecoder32(field, field_length);
+				TemplateID = bytetoInt32Decoder(field, field_length);
 			}
 			if(TemplateID > 0){
 				templateDecoder(TemplateID, PMap, FASTMessage, FASTMessage_length);
@@ -489,17 +477,17 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
     int field_length = 0, zeroCounter = 0;
 
-	for(int i = 0; i < 7000; i++){
+	for(int i = 0; i < 7000; i++){ //clean the buffer
 		newField[i] = 0x00;
 	}
 
 	if(PMap_order > 0){
-		if(!(pMapCheck(PMap, PMap_length, PMap_order))){
-			if(PMap_order == MDENTRYPX){
+		if(!(pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is !1 (0)
+			if(PMap_order == MDENTRYPX){ //fix this
 				1+1;
 			}
 			else{
-				newField[0] = 0x95;
+				newField[0] = 0x00; //if bitsmap's bit is 0 and not decimal, return NULL
 				return newField;
 			}
 		}
@@ -516,20 +504,20 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
     }
 }
 
-__uint32_t byteDecoder32(__uint8_t* field, __int32_t field_length){
+__uint32_t bytetoInt32Decoder(__uint8_t* field, __int32_t field_length){
     int j = field_length - 2;
     __uint32_t result;
     
     result = field[field_length-1];
 
-    if(field_length == 1){
+    if(field_length == 1){ //to do not get negative adds
     	field_length = 2;
     }
     
     for(int i = 0; i < field_length - 1; i++){
-        result = result << 33 - ((i + 1) * 8);
-        result = result >> 32 - ((i + 1) * 8);
-        result = (field[j] << ((i + 1) * 8)) | result;
+        result = result << 33 - ((i + 1) * 8); //save only the 7 LSB in a 32 bits buffer
+        result = result >> 32 - ((i + 1) * 8); // ´´
+        result = (field[j] << ((i + 1) * 8)) | result; //concat with the next byte
         j--;
     } 
 
@@ -538,10 +526,31 @@ __uint32_t byteDecoder32(__uint8_t* field, __int32_t field_length){
     return result;
 }
 
+char* bytetoStringDecoder(__uint8_t* field, __int32_t field_length){
+	char result[field_length], aux;
+
+	/*if(field_length == 1)
+		field_length = 2;*/
+
+	for(int i = 0; i < field_length + 1; i++){
+		if((field[i] >> 7) & 0b00000001){ //if MSB is 1
+			field[i] = field[i] << 1; //save only the 7 LSB in a 8 bits buffer
+        	field[i] = field[i] >> 1; //
+		}
+		result[i] = field[i];
+	}
+
+	if(field[0] == 0x00)
+		strcpy(result, "NULL");
+
+	strcpy(field, result);
+	return field;
+}
+
 int pMapCheck(__uint32_t PMap, unsigned int PMap_length, __uint32_t noCurrentField){
 	__uint32_t aux_bitMap = 0b00000000000000000000000000000001;
 
-	if(PMap & (aux_bitMap << (32 - PMap_length - noCurrentField))){
+	if(PMap & (aux_bitMap << (32 - PMap_length - noCurrentField))){ //if bitsmap's bit is 1
 		return 1;
 	}
 	else{
