@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-//#include "t145toFIX.h"
+#include "t145toFIX.h"
  
 FILE* openFile(char* fileName);
 float bytetoDecimalDecoder(__uint8_t* field);
@@ -293,18 +293,19 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		printf(" IndexSeq: %ld \n", IndexSeq);
 	}
 
-	/*t145toFIX(
+	t145toFIX(
 		//Template
 		MsgSeqNum, TradeDate, SendintTime,
 		//SequenceMDEntries
-		NoMDEntries, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDUpdateAction,
-		RptSeq, NumberOfOrders, MDEntryTime, MDEntryDate, MDInsertDate, MDInsertTime,
-		SellerDays, TradingSessionID, OpenCloseSettlFlag, MDEntryPositionNo, SettPriceType,
-		LastTradeDate, PriceAdjustmentMethod, PriceLimitType, PriceBandMidpointPriceType,
-		MDEntryPx,
+		NoMDEntries, MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDUpdateAction, RptSeq, NumberOfOrders, 
+		MDEntryTime, MDEntryDate, MDInsertDate, MDInsertTime, SellerDays, TradingSessionID, OpenCloseSettlFlag, MDEntryPositionNo, 
+		SettPriceType, LastTradeDate, PriceAdjustmentMethod, PriceLimitType, PriceBandMidpointPriceType, SecurityID, MDEntrySize, 
+		TradeVolume, AvgDailyTradedQty, ExpireDate, EarlyTermination, MaxTradeVol, MDEntryType, QuoteCondition, PriceType, MDStreamID, 
+		Currency, TickDirection, TradeCondition, OrderID, TradeID, MDEntryBuyer, MDEntrySeller, PriceBandType, MDEntryPx, 
+		MDEntryInterestRate, NetChgPrevDay, LowLimitPrice, HighLimitPrice, TradingReferencePrice,
 		//SequenceUnderlyings
-		NoUnderlyings, UnderlyingPXType
-	);*/
+		NoUnderlyings, UnderlyingPXType, UnderlyingSecurityID, IndexSeq, UnderlyingPx
+	);
 }
 
 void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
