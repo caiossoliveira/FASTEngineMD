@@ -1,3 +1,5 @@
+#include <string.h>
+
 void t145toFIX(
 	//Template
 	__uint32_t MsgSeqNum, __uint32_t TradeDate, __uint64_t SendintTime,
@@ -17,13 +19,21 @@ void t145toFIX(
 	__uint32_t NoUnderlyings, __uint32_t UnderlyingPXType, __uint64_t UnderlyingSecurityID, __uint64_t IndexSeq,
 	float UnderlyingPx
 ){
+
+	#define PRINTD(file, var) if(var > 0.00) printf(file, var)
+	#define PRINTS(file, var) if(strstr(var, "NULL") == 0) printf(file, var)
+
 	printf("\n\n");
 	printf("------------------------------------------------F-I-X------------------------------------------------\n");
 
+	const char* ApplVerID = "9";
+	const char* MsgType = "X";
 	const int SecurityIDSource = 8;
 	const char SecurityExchange[4] = "BVMF";
 
 	//template
+	printf(" 1128=%s |", ApplVerID);
+	printf(" 35=%s |", MsgType);
 	printf(" 34=%d |", MsgSeqNum);
 	printf(" 52=%ld |", SendintTime);
 	printf(" 75=%d |", TradeDate);
@@ -33,43 +43,43 @@ void t145toFIX(
 	if(NoMDEntries > 0){ //sequence
 		//printf(" MDEntriesSequence_PMap: %d \n", MDEntriesSequence_PMap);
 		printf(" 279=%d |", MDUpdateAction);
-		printf(" 269=%s |", MDEntryType);
+		PRINTS(" 269=%s |", MDEntryType);
 		printf(" 22=%d |", SecurityIDSource);
-		printf(" 207=%s |", SecurityExchange);
+		PRINTS(" 207=%s |", SecurityExchange);
 		printf(" 48=%ld |", SecurityID);
 		printf(" 83=%d |", RptSeq);
-		printf(" 276=%s |", QuoteCondition);
-		printf(" 270=%.2f |", MDEntryPx);
-		printf(" 37014=%.2f |", MDEntryInterestRate);
+		PRINTS(" 276=%s |", QuoteCondition);
+		PRINTD(" 270=%.2f |", MDEntryPx);
+		PRINTD(" 37014=%.2f |", MDEntryInterestRate);
 		printf(" 346=%d |", NumberOfOrders);
-		printf(" 423=%s |", PriceType);
+		PRINTS(" 423=%s |", PriceType);
 		printf(" 273=%d |", MDEntryTime);
 		printf(" 271=%ld |", MDEntrySize);
 		printf(" 272=%d |", MDEntryDate);
 		printf(" 37016=%d |", MDInsertDate);
 		printf(" 37017=%d |", MDInsertTime);
-		printf(" 1500=%s |", MDStreamID);
-		printf(" 15=%s |", Currency);
+		PRINTS(" 1500=%s |", MDStreamID);
+		PRINTS(" 15=%s |", Currency);
 		printf(" 451=%.2f |", NetChgPrevDay);
 		printf(" 287=%d |", SellerDays);
 		printf(" 1020=%ld |", TradeVolume);
-		printf(" 274=%s |", TickDirection);
-		printf(" 277=%s |", TradeCondition);
+		PRINTS(" 274=%s |", TickDirection);
+		PRINTS(" 277=%s |", TradeCondition);
 		printf(" 336=%d |", TradingSessionID);
 		printf(" 286=%d |", OpenCloseSettlFlag);
-		printf(" 37=%s |", OrderID);
-		printf(" 1003=%s |", TradeID);
-		printf(" 288=%s |", MDEntryBuyer);
-		printf(" 289=%s |", MDEntrySeller);
+		PRINTS(" 37=%s |", OrderID);
+		PRINTS(" 1003=%s |", TradeID);
+		PRINTS(" 288=%s |", MDEntryBuyer);
+		PRINTS(" 289=%s |", MDEntrySeller);
 		printf(" 290=%d |", MDEntryPositionNo);
 		printf(" 731=%d |", SettPriceType);
 		printf(" 9325=%d |", LastTradeDate);	
 		printf(" 37013=%d |", PriceAdjustmentMethod);
-		printf(" 6939=%s |", PriceBandType);
+		PRINTS(" 6939=%s |", PriceBandType);
 		printf(" 1306=%d |", PriceLimitType);
-		printf(" 1148=%.2f |", LowLimitPrice);
-		printf(" 1149=%.2f |", HighLimitPrice);
-		printf(" 1150=%.2f |", TradingReferencePrice);
+		PRINTD(" 1148=%.2f |", LowLimitPrice);
+		PRINTD(" 1149=%.2f |", HighLimitPrice);
+		PRINTD(" 1150=%.2f |", TradingReferencePrice);
 		printf(" 37008=%d |", PriceBandMidpointPriceType);
 		printf(" 37003=%ld |", AvgDailyTradedQty);
 		printf(" 432=%ld |", ExpireDate);
@@ -83,5 +93,5 @@ void t145toFIX(
 		printf(" 37100=%ld", IndexSeq);
 	}
 
-	printf("\n");
+	printf("\n-----------------------------------------------------------------------------------------------------\n\n");
 }

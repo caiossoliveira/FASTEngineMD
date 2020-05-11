@@ -57,10 +57,11 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	#define TRADINGREFERENCEPRICE 27
 	#define UNDERLYINGPXTYPE 1
 
-	__uint8_t aux_FASTMessage[7000];
+	/*__uint8_t aux_FASTMessage[7000];
 	for(int i = 0; i < 7000; i++){
 		aux_FASTMessage[i] = FASTMessage[i];
-	}
+	}*/
+
 	__uint8_t* ptr_FASTMessage = FASTMessage+3; //MsgSeqNum is the first here but the third in the message
 	__uint8_t field[7000] = {0x80};
 
@@ -116,11 +117,15 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		MDEntriesSequence_PMap_length = fieldLength(aux);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDUPDATEACTION, MDEntriesSequence_PMap_length);
-		MDUpdateAction = bytetoInt32Decoder(aux);
+		if(aux[0] > 0x00){ //if pMap is 1
+			MDUpdateAction = bytetoInt32Decoder(aux); //copy
+		}
 		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYTYPE, MDEntriesSequence_PMap_length);
-		strcpy(MDEntryType, bytetoStringDecoder(aux));
-
+		if(aux[0] > 0x00){ //if pMap is 1
+			strcpy(MDEntryType, bytetoStringDecoder(aux));
+		}
+		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, SECURITYID, MDEntriesSequence_PMap_length);
 		SecurityID = bytetoInt64Decoder(aux);
 		
@@ -131,7 +136,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		strcpy(QuoteCondition, bytetoStringDecoder(aux));
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPX, MDEntriesSequence_PMap_length);
-		MDEntryPx = bytetoDecimalDecoder(aux); //bytetoInt32Decoder(aux) * 0.01;
+		MDEntryPx = bytetoDecimalDecoder(aux);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYINTERESTRATE, MDEntriesSequence_PMap_length);
 		MDEntryInterestRate = bytetoDecimalDecoder(aux);
@@ -428,7 +433,7 @@ void readMessage(FILE* file){
 
 		FASTMessage_length = 0;
 
-		printf(" ---------------------------------------------------------------------------\n\n");
+		//printf(" ---------------------------------------------------------------------------\n\n");
 	}
 }
 
@@ -446,7 +451,7 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
 
 	if(PMap_order > 0){
 		if(!(pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is !1 (0)
-			if(!isDecimal(PMap_order)){ //if bitsmap's bit is 0 and not decimal, return NULL
+			if(!isDecimal(PMap_order)){ //if bitsmap's bit is 0 and is not decimal, return NULL
 				newField[0] = 0x00; 
 				return newField;
 			}
@@ -454,12 +459,11 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
 	}
 
 	for(int i = 0; i < FASTMessage_length; i++){
-		newField[field_length] = *(*FASTMessage);
+		newField[field_length] = *(*FASTMessage); //newField gets the bytes of FASTMessage
     	field_length++;
-    	*FASTMessage = *FASTMessage+1;
-    	if((newField[field_length-1] >> 7) & 0b00000001){
+    	*FASTMessage = *FASTMessage+1; //increments the address of the ptr
+    	if((newField[field_length-1] >> 7) & 0b00000001){ //if it is the end of the fild
 	    	return newField;
-    		//field_length = 0;
     	}
     }
 }
