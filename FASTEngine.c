@@ -9,6 +9,7 @@ __uint64_t bytetoInt64Decoder(__uint8_t* field);
 __uint32_t bytetoPMapDecoder(__uint8_t* field, __int32_t field_length);
 char* bytetoStringDecoder(__uint8_t* field);
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length);
+__uint8_t* getFieldD(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length);
 __uint32_t fieldLength(__uint8_t* field);
 int pMapCheck(__uint32_t PMap, unsigned int PMap_length, __uint32_t noCurrentField);
 int isDecimal(unsigned int PMap_order);
@@ -58,7 +59,6 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	#define UNDERLYINGPXTYPE 1
 
 	#define COPY aux[0] > 0x00
-	#define DECIMAL aux[0] > 0x00
 	#define INCREMENT aux[0] > 0x00
 
 	/*__uint8_t aux_FASTMessage[7000];
@@ -148,14 +148,18 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, QUOTECONDITION, MDEntriesSequence_PMap_length);
 		strcpy(QuoteCondition, bytetoStringDecoder(aux));
 
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPX, MDEntriesSequence_PMap_length);
-		if(DECIMAL){
-			MDEntryPx = bytetoDecimalDecoder(aux);
+		aux = getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPX, MDEntriesSequence_PMap_length);
+		if(aux[0] == 0){
+			MDEntryPx = bytetoDecimalDecoder(aux+1); //bytetoDecimalDecoder(aux, -2);
 		}
 		
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYINTERESTRATE, MDEntriesSequence_PMap_length);
-		if(DECIMAL){
-			MDEntryInterestRate = bytetoDecimalDecoder(aux);
+		aux = getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYINTERESTRATE, MDEntriesSequence_PMap_length);
+		if(aux[0] == 1){
+			/*__uint8_t* exp = aux+1;
+			if(exp != 0x80){
+				//mantissa = getField();
+				//bytetoDecimalDecoder(mantissa, exponent)
+			}*/
 		}
 		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, NUMBEROFORDERS, MDEntriesSequence_PMap_length);
@@ -470,7 +474,7 @@ void templateDoNotIdentified(__uint16_t TemplateID){
 
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length){
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
-    int field_length = 0, zeroCounter = 0;
+    int field_length = 0;
 
 	for(int i = 0; i < 7000; i++){ //clean the buffer
 		newField[i] = 0x00;
@@ -481,6 +485,35 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
 			if(!isDecimal(PMap_order)){ //if bitsmap's bit is 0 and is not decimal, return NULL
 				newField[0] = 0x00; 
 				return newField;
+			}
+		}
+	}
+
+	for(int i = 0; i < FASTMessage_length; i++){
+		newField[field_length] = *(*FASTMessage); //newField gets the bytes of FASTMessage
+    	field_length++;
+    	*FASTMessage = *FASTMessage+1; //increments the address of the ptr
+    	if((newField[field_length-1] >> 7) & 0b00000001){ //if it is the end of the fild
+	    	return newField;
+    	}
+    }
+}
+
+__uint8_t* getFieldD(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length){
+	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
+    int field_length = 1;
+
+	for(int i = 0; i < 7000; i++){ //clean the buffer
+		newField[i] = 0x00;
+	}
+
+	if(PMap_order > 0){
+		if(isDecimal(PMap_order)){ //if the field is decimal
+			if((pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 1
+				newField[0] = 0x01; 
+			}
+			else{
+				newField[0] = 0x00; 
 			}
 		}
 	}
