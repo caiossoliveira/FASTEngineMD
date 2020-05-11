@@ -57,6 +57,10 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	#define TRADINGREFERENCEPRICE 27
 	#define UNDERLYINGPXTYPE 1
 
+	#define COPY aux[0] > 0x00
+	#define DECIMAL aux[0] > 0x00
+	#define INCREMENT aux[0] > 0x00
+
 	/*__uint8_t aux_FASTMessage[7000];
 	for(int i = 0; i < 7000; i++){
 		aux_FASTMessage[i] = FASTMessage[i];
@@ -117,29 +121,42 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		MDEntriesSequence_PMap_length = fieldLength(aux);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDUPDATEACTION, MDEntriesSequence_PMap_length);
-		if(aux[0] > 0x00){ //if pMap is 1
+		if(COPY){ //if pMap is 1
 			MDUpdateAction = bytetoInt32Decoder(aux); //copy
 		}
 		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYTYPE, MDEntriesSequence_PMap_length);
-		if(aux[0] > 0x00){ //if pMap is 1
+		if(COPY){ //if pMap is 1
 			strcpy(MDEntryType, bytetoStringDecoder(aux));
 		}
-		
+
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, SECURITYID, MDEntriesSequence_PMap_length);
-		SecurityID = bytetoInt64Decoder(aux);
+		if(COPY){
+			SecurityID = bytetoInt64Decoder(aux);
+		}
 		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, RPTSEQ, MDEntriesSequence_PMap_length);
-		RptSeq = bytetoInt32Decoder(aux);
+		if(INCREMENT){ //if PMap == 1
+			RptSeq = bytetoInt32Decoder(aux);
+		}
+		else{
+			if(RptSeq > 0){
+				RptSeq = RptSeq++;
+			}
+		}
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, QUOTECONDITION, MDEntriesSequence_PMap_length);
 		strcpy(QuoteCondition, bytetoStringDecoder(aux));
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPX, MDEntriesSequence_PMap_length);
-		MDEntryPx = bytetoDecimalDecoder(aux);
-
+		if(DECIMAL){
+			MDEntryPx = bytetoDecimalDecoder(aux);
+		}
+		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYINTERESTRATE, MDEntriesSequence_PMap_length);
-		MDEntryInterestRate = bytetoDecimalDecoder(aux);
+		if(DECIMAL){
+			MDEntryInterestRate = bytetoDecimalDecoder(aux);
+		}
 		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, NUMBEROFORDERS, MDEntriesSequence_PMap_length);
 		NumberOfOrders = bytetoInt32Decoder(aux);
@@ -148,25 +165,35 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		strcpy(PriceType, bytetoStringDecoder(aux));
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYTIME, MDEntriesSequence_PMap_length);
-		MDEntryTime = bytetoInt32Decoder(aux);
+		if(COPY){
+			MDEntryTime = bytetoInt32Decoder(aux);
+		}
 		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
 		MDEntrySize = bytetoInt64Decoder(aux);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYDATE, MDEntriesSequence_PMap_length);
-		MDEntryDate = bytetoInt32Decoder(aux);
+		if(COPY){
+			MDEntryDate = bytetoInt32Decoder(aux);
+		}
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDINSERTDATE, MDEntriesSequence_PMap_length);
-		MDInsertDate = bytetoInt32Decoder(aux);
+		if(COPY){
+			MDInsertDate = bytetoInt32Decoder(aux);
+		}
 		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDINSERTTIME, MDEntriesSequence_PMap_length);
-		MDInsertTime = bytetoInt32Decoder(aux);
+		if(COPY){
+			MDInsertTime = bytetoInt32Decoder(aux);
+		}
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDSTREAMID, MDEntriesSequence_PMap_length);
 		strcpy(MDStreamID, bytetoStringDecoder(aux));
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, CURRENCY, MDEntriesSequence_PMap_length);
-		strcpy(Currency, bytetoStringDecoder(aux));
+		if(COPY){
+			strcpy(Currency, bytetoStringDecoder(aux));
+		}
 		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, NETCHGPREVDAY, MDEntriesSequence_PMap_length);
 		NetChgPrevDay = bytetoDecimalDecoder(aux);
@@ -450,7 +477,7 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
 	}
 
 	if(PMap_order > 0){
-		if(!(pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is !1 (0)
+		if(!(pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 0 (!1)
 			if(!isDecimal(PMap_order)){ //if bitsmap's bit is 0 and is not decimal, return NULL
 				newField[0] = 0x00; 
 				return newField;
@@ -471,6 +498,7 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
 int isDecimal(unsigned int PMap_order){
 	switch(PMap_order){
 		case MDENTRYPX : return 1;
+		case MDENTRYINTERESTRATE : return 1;
 		default : return 0;
 	}
 }
