@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "t145toFIX.h"
  
 FILE* openFile(char* fileName);
@@ -9,7 +10,7 @@ __uint64_t bytetoInt64Decoder(__uint8_t* field);
 __uint32_t bytetoPMapDecoder(__uint8_t* field, __int32_t field_length);
 char* bytetoStringDecoder(__uint8_t* field);
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length);
-__uint8_t* getFieldD(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length);
+float getFieldD(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length);
 __uint32_t fieldLength(__uint8_t* field);
 int pMapCheck(__uint32_t PMap, unsigned int PMap_length, __uint32_t noCurrentField);
 int isDecimal(unsigned int PMap_order);
@@ -121,19 +122,16 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		MDEntriesSequence_PMap_length = fieldLength(aux);
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDUPDATEACTION, MDEntriesSequence_PMap_length);
-		if(COPY){ //if pMap is 1
+		if(COPY) //if pMap is 1
 			MDUpdateAction = bytetoInt32Decoder(aux); //copy
-		}
 		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYTYPE, MDEntriesSequence_PMap_length);
-		if(COPY){ //if pMap is 1
+		if(COPY) //if pMap is 1
 			strcpy(MDEntryType, bytetoStringDecoder(aux));
-		}
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, SECURITYID, MDEntriesSequence_PMap_length);
-		if(COPY){
+		if(COPY)
 			SecurityID = bytetoInt64Decoder(aux);
-		}
 		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, RPTSEQ, MDEntriesSequence_PMap_length);
 		if(INCREMENT){ //if PMap == 1
@@ -148,19 +146,9 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, QUOTECONDITION, MDEntriesSequence_PMap_length);
 		strcpy(QuoteCondition, bytetoStringDecoder(aux));
 
-		aux = getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPX, MDEntriesSequence_PMap_length);
-		if(aux[0] == 0){
-			MDEntryPx = bytetoDecimalDecoder(aux+1); //bytetoDecimalDecoder(aux, -2);
-		}
+		MDEntryPx = getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPX, MDEntriesSequence_PMap_length);
 		
-		aux = getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYINTERESTRATE, MDEntriesSequence_PMap_length);
-		if(aux[0] == 1){
-			/*__uint8_t* exp = aux+1;
-			if(exp != 0x80){
-				//mantissa = getField();
-				//bytetoDecimalDecoder(mantissa, exponent)
-			}*/
-		}
+		MDEntryInterestRate = getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPX, MDEntriesSequence_PMap_length);
 		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, NUMBEROFORDERS, MDEntriesSequence_PMap_length);
 		NumberOfOrders = bytetoInt32Decoder(aux);
@@ -199,8 +187,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 			strcpy(Currency, bytetoStringDecoder(aux));
 		}
 		
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, NETCHGPREVDAY, MDEntriesSequence_PMap_length);
-		NetChgPrevDay = bytetoDecimalDecoder(aux);
+		NetChgPrevDay = getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, NETCHGPREVDAY, MDEntriesSequence_PMap_length);
 		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, SELLERDAYS, MDEntriesSequence_PMap_length);
 		SellerDays = bytetoInt32Decoder(aux);
@@ -250,14 +237,11 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, PRICELIMITTYPE, MDEntriesSequence_PMap_length);
 		PriceAdjustmentMethod = bytetoInt32Decoder(aux);
 		
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, LOWLIMITPRICE, MDEntriesSequence_PMap_length);
-		LowLimitPrice = bytetoDecimalDecoder(aux);
+		LowLimitPrice = getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, LOWLIMITPRICE, MDEntriesSequence_PMap_length);
 		
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, HIGHLIMITPRICE, MDEntriesSequence_PMap_length);
-		HighLimitPrice = bytetoDecimalDecoder(aux);
+		HighLimitPrice = getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, HIGHLIMITPRICE, MDEntriesSequence_PMap_length);
 
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, TRADINGREFERENCEPRICE, MDEntriesSequence_PMap_length);
-		TradingReferencePrice = bytetoDecimalDecoder(aux);
+		TradingReferencePrice = getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, TRADINGREFERENCEPRICE, MDEntriesSequence_PMap_length);
 		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
 		PriceAdjustmentMethod = bytetoInt32Decoder(aux);
@@ -499,33 +483,39 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
     }
 }
 
-__uint8_t* getFieldD(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length){
+float getFieldD(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length){
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
-    int field_length = 1;
+    int field_length = 0;
+    float decimal = 0.0;
+    __uint8_t* ptrExp;
+    __uint8_t* ptrMant;
+    float exp = 0.0;
+    double mant = 0.0;
 
 	for(int i = 0; i < 7000; i++){ //clean the buffer
 		newField[i] = 0x00;
 	}
 
 	if(PMap_order > 0){
-		if(isDecimal(PMap_order)){ //if the field is decimal
-			if((pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 1
-				newField[0] = 0x01; 
+		if(isDecimal(PMap_order)){ //sure if the field is decimal
+			if(!(pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 0
+				exp=-2; //so there is no exp, then is no exp in the msg, so the default is -2
+				ptrMant = getField(newField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //get the mantissa
+				mant = bytetoInt64Decoder(ptrMant); //decode the mantissa
 			}
-			else{
-				newField[0] = 0x00; 
+			else{ //if the bit is 1
+				ptrExp = getField(newField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //there is a exp in the msg
+				if(*ptrExp != 0x80){ //if it is no zero
+					ptrMant = getField(newField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //get the mantissa
+					exp = bytetoInt32Decoder(ptrExp); //decode the exp
+					mant = bytetoInt64Decoder(ptrMant); //decode the mant
+				}
 			}
 		}
 	}
 
-	for(int i = 0; i < FASTMessage_length; i++){
-		newField[field_length] = *(*FASTMessage); //newField gets the bytes of FASTMessage
-    	field_length++;
-    	*FASTMessage = *FASTMessage+1; //increments the address of the ptr
-    	if((newField[field_length-1] >> 7) & 0b00000001){ //if it is the end of the fild
-	    	return newField;
-    	}
-    }
+	decimal = pow(10, exp);
+	return mant * decimal;
 }
 
 int isDecimal(unsigned int PMap_order){
@@ -537,6 +527,7 @@ int isDecimal(unsigned int PMap_order){
 }
 
 float bytetoDecimalDecoder(__uint8_t* field){
+	field = field+1;
     __int32_t field_length = fieldLength(field);
     int j = field_length - 2;
     __uint32_t result;
