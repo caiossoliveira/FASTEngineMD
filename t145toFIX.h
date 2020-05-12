@@ -20,8 +20,9 @@ void t145toFIX(
 	float UnderlyingPx
 ){
 
-	#define PRINTD(file, var) if(var > 0.00) printf(file, var)
-	#define PRINTS(file, var) if(strstr(var, "NULL") == 0) printf(file, var)
+	#define PRINTI(file, var) if(var > 0) printf(file, var)	//print for int 
+	#define PRINTD(file, var) if(var > 0.00) printf(file, var)	//print for decimals
+	#define PRINTS(file, var) if(strcmp(var, "NULL") != 0) printf(file, var)	//print for strings
 
 	printf("\n\n");
 	printf("------------------------------------------------F-I-X------------------------------------------------\n");
@@ -51,7 +52,7 @@ void t145toFIX(
 		PRINTS(" 276=%s |", QuoteCondition);
 		PRINTD(" 270=%.2f |", MDEntryPx);
 		PRINTD(" 37014=%.2f |", MDEntryInterestRate);
-		printf(" 346=%d |", NumberOfOrders);
+		PRINTI(" 346=%d |", NumberOfOrders);
 		PRINTS(" 423=%s |", PriceType);
 		printf(" 273=%d |", MDEntryTime);
 		printf(" 271=%ld |", MDEntrySize);
@@ -72,25 +73,25 @@ void t145toFIX(
 		PRINTS(" 288=%s |", MDEntryBuyer);
 		PRINTS(" 289=%s |", MDEntrySeller);
 		printf(" 290=%d |", MDEntryPositionNo);
-		printf(" 731=%d |", SettPriceType);
-		printf(" 9325=%d |", LastTradeDate);	
-		printf(" 37013=%d |", PriceAdjustmentMethod);
+		PRINTI(" 731=%d |", SettPriceType);
+		PRINTI(" 9325=%d |", LastTradeDate);	
+		PRINTI(" 37013=%d |", PriceAdjustmentMethod);
 		PRINTS(" 6939=%s |", PriceBandType);
-		printf(" 1306=%d |", PriceLimitType);
+		PRINTI(" 1306=%d |", PriceLimitType);
 		PRINTD(" 1148=%.2f |", LowLimitPrice);
 		PRINTD(" 1149=%.2f |", HighLimitPrice);
 		PRINTD(" 1150=%.2f |", TradingReferencePrice);
-		printf(" 37008=%d |", PriceBandMidpointPriceType);
-		printf(" 37003=%ld |", AvgDailyTradedQty);
-		printf(" 432=%ld |", ExpireDate);
-		printf(" 37019=%ld |", EarlyTermination);
-		printf(" 1140=%ld |", MaxTradeVol);
+		PRINTI(" 37008=%d |", PriceBandMidpointPriceType);
+		PRINTI(" 37003=%ld |", AvgDailyTradedQty);
+		PRINTI(" 432=%ld |", ExpireDate);
+		PRINTI(" 37019=%ld |", EarlyTermination);
+		PRINTI(" 1140=%ld |", MaxTradeVol);
 
 		//SequenceUnderlyings
-		printf(" 711=%d |", NoUnderlyings);
+		PRINTI(" 711=%d |", NoUnderlyings);
 		if(NoUnderlyings > 0){}
 
-		printf(" 37100=%ld", IndexSeq);
+		PRINTI(" 37100=%ld", IndexSeq);
 	}
 
 	printf("\n-----------------------------------------------------------------------------------------------------\n\n");

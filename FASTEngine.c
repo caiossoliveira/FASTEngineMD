@@ -60,12 +60,8 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	#define UNDERLYINGPXTYPE 1
 
 	#define COPY aux[0] > 0x00
+	#define STR_COPY strcmp(aux, "NULL") != 0 //different of "NULL"
 	#define INCREMENT aux[0] > 0x00
-
-	/*__uint8_t aux_FASTMessage[7000];
-	for(int i = 0; i < 7000; i++){
-		aux_FASTMessage[i] = FASTMessage[i];
-	}*/
 
 	__uint8_t* ptr_FASTMessage = FASTMessage+3; //MsgSeqNum is the first here but the third in the message
 	__uint8_t field[7000] = {0x80};
@@ -78,8 +74,8 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	__uint32_t RptSeq = 0, NumberOfOrders = 0, MDEntryTime = 0, MDEntryDate = 0, MDInsertDate = 0, MDInsertTime = 0;
 	__uint32_t SellerDays = 0, TradingSessionID = 0, OpenCloseSettlFlag = 0, MDEntryPositionNo = 0, SettPriceType = 0;
 	__uint32_t LastTradeDate = 0, PriceAdjustmentMethod = 0, PriceLimitType = 0, PriceBandMidpointPriceType = 0;
-	__uint64_t SecurityID = 0, MDEntrySize = 0, TradeVolume = 0, AvgDailyTradedQty = 0, ExpireDate = 0, EarlyTermination = 0;
-	__uint64_t MaxTradeVol = 0;
+	__uint64_t SecurityID = 0, TradeVolume = 0, AvgDailyTradedQty = 0, ExpireDate = 0, EarlyTermination = 0, MaxTradeVol = 0;
+	__int64_t MDEntrySize = 0;
 	char MDEntryType[1000];
 	char QuoteCondition[1000];
 	char PriceType[1000];
@@ -111,10 +107,10 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
 	NoMDEntries = bytetoInt32Decoder(aux);
 	
-	printf("\n MsgSeqNum: %d \n", MsgSeqNum);
+	/*printf("\n MsgSeqNum: %d \n", MsgSeqNum);
 	printf(" SendintTime: %ld \n", SendintTime);
 	printf(" TradeDate: %d \n", TradeDate);
-	printf(" NoMDEntries: %d \n", NoMDEntries);
+	printf(" NoMDEntries: %d \n", NoMDEntries);*/
 
 	if(NoMDEntries > 0){ //sequence
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
@@ -183,7 +179,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		strcpy(MDStreamID, bytetoStringDecoder(aux));
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, CURRENCY, MDEntriesSequence_PMap_length);
-		if(COPY){
+		if(STR_COPY){
 			strcpy(Currency, bytetoStringDecoder(aux));
 		}
 		
@@ -261,7 +257,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
 		NoUnderlyings = bytetoInt32Decoder(aux);
 		
-		printf(" MDEntriesSequence_PMap: %d \n", MDEntriesSequence_PMap);
+		/*printf(" MDEntriesSequence_PMap: %d \n", MDEntriesSequence_PMap);
 		printf(" MDUpdateAction: %d \n", MDUpdateAction);
 		printf(" MDEntryType: %s \n", MDEntryType);
 		printf(" SecurityID: %ld \n", SecurityID);
@@ -303,14 +299,14 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		printf(" ExpireDate: %ld \n", ExpireDate);
 		printf(" EarlyTermination: %ld \n", EarlyTermination);
 		printf(" MaxTradeVol: %ld \n", MaxTradeVol);
-		printf(" NoUnderlyings: %d \n", NoUnderlyings);
+		printf(" NoUnderlyings: %d \n", NoUnderlyings);*/
 
 
 		if(NoUnderlyings > 0){}
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
 		IndexSeq = bytetoInt64Decoder(aux);
-		printf(" IndexSeq: %ld \n", IndexSeq);
+		/*printf(" IndexSeq: %ld \n", IndexSeq);*/
 	}
 
 	t145toFIX(
@@ -424,7 +420,7 @@ void readMessage(FILE* file){
 
 	//while(fread(&byte, 1, 1, file) > 0){
 	for(int i = 0; i < 1250; i++){ // number of messages //1250
-		printf(" Message %d:    ----------------------------------------------------------\n", i+1);
+		printf(" \n Message %d:    ----------------------------------------------------------\n", i+1);
 		for(int i = 0; i < 10; i++){ //read header
 			fread(&byte, 1, 1, file);
 			header[i] = byte;
@@ -434,8 +430,6 @@ void readMessage(FILE* file){
 		CurrentChunk = (header[6] << 8) | (header[7]);
 		MsgLength = (header[8] << 8) | (header[9]);
 
-		printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n", MsgSeqNum, NoChunks, CurrentChunk, MsgLength);
-
 		for(int i = 0; i < MsgLength; i++){
 
 			fread(&byte, 1, 1, file);
@@ -443,6 +437,8 @@ void readMessage(FILE* file){
 			FASTMessage[FASTMessage_length] = byte;
 			FASTMessage_length++;
 		}
+
+		printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n", MsgSeqNum, NoChunks, CurrentChunk, MsgLength);
 
 		identifyTemplate(FASTMessage, FASTMessage_length);
 
@@ -667,4 +663,12 @@ FILE* openFile(char* fileName) {
    static FILE* file;
    file = fopen(fileName, "rb"); 
    return file;
+}
+
+void test(){
+	char str1[1000];
+	strcpy(str1, "what");
+	char* str2 = "what";
+
+	printf("\n %d \n", strcmp(str1, str2));
 }
