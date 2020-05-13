@@ -64,7 +64,7 @@ void readMessage(FILE* file){
 		if(MsgSeqNum > 731915){ //only to compare with the FIX log
 			printf("\n-----------------------------------------------------------------------------------------------------");
 			printf(" \n Message %d: \n", i+1);
-			printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n", MsgSeqNum, NoChunks, CurrentChunk, MsgLength);
+			printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n\n", MsgSeqNum, NoChunks, CurrentChunk, MsgLength);
 			printFields(FASTMessage, FASTMessage_length);
 		}
 		FASTMessage_length = 0;
