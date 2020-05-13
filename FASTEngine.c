@@ -325,7 +325,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 }
 
 void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
-	__uint8_t field[7000];
+	__uint8_t field[7000] = {0x00};
 	unsigned int field_length = 0;
 	unsigned int noTemplateField = 0;
 	__uint32_t MsgSeqNum = 0;
@@ -340,14 +340,14 @@ void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
     		noTemplateField++;
     		if(noTemplateField == 3){ //&& (pmap >><< fieldOrder)
 				MsgSeqNum = bytetoInt32Decoder(field);
-				printf(" MsgSeqNum: %d \n", MsgSeqNum);
 			}
 			else if(noTemplateField == 4){
 				printf(" SendingTime: ");
 				for(int i=0; i < field_length; i++){
-					printf("%02x ", (unsigned int) field[i]); //%u to a series of bytes 
+					printf("%02x ", (unsigned int) field[i]); 
 				}
 				printf("\n");
+				SendingTime = bytetoInt64Decoder(field);
 			}
 			else if(!(noTemplateField == 0 || noTemplateField == 1 || noTemplateField == 2)){
 				printf(" Field number %d do not identified: ", noTemplateField);
@@ -359,6 +359,8 @@ void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
 			field_length = 0;
     	}
     }
+    printf(" MsgSeqNum: %d \n", MsgSeqNum);
+    printf(" SendingTime: %ld \n", SendingTime);
 }
 
 void templateDecoder(__uint16_t TemplateID, __uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length){
@@ -389,7 +391,7 @@ void identifyTemplate(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
     		noCurrentField++;
     		if(noCurrentField == 1){
     			PMap = bytetoPMapDecoder(field, field_length);
-				printf(" PMap: %02x \n", PMap);
+				//printf(" PMap: %02x \n", PMap);
 				if(!(PMap & 0b01000000)){
 					printf(" TemplateID do not specified in the message. \n");
 				}
@@ -420,7 +422,6 @@ void readMessage(FILE* file){
 
 	//while(fread(&byte, 1, 1, file) > 0){
 	for(int i = 0; i < 1250; i++){ // number of messages //1250
-		printf(" \n Message %d:    ----------------------------------------------------------\n", i+1);
 		for(int i = 0; i < 10; i++){ //read header
 			fread(&byte, 1, 1, file);
 			header[i] = byte;
@@ -438,10 +439,12 @@ void readMessage(FILE* file){
 			FASTMessage_length++;
 		}
 
-		printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n", MsgSeqNum, NoChunks, CurrentChunk, MsgLength);
-
-		identifyTemplate(FASTMessage, FASTMessage_length);
-
+		if(MsgSeqNum > 731915){ //only to compare with the FIX log
+			printf("\n-----------------------------------------------------------------------------------------------------");
+			printf(" \n Message %d: \n", i+1);
+			printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n", MsgSeqNum, NoChunks, CurrentChunk, MsgLength);
+			identifyTemplate(FASTMessage, FASTMessage_length);
+		}
 		FASTMessage_length = 0;
 
 		//printf(" ---------------------------------------------------------------------------\n\n");
@@ -463,7 +466,7 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
 	if(PMap_order > 0){
 		if(!(pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 0 (!1)
 			if(!isDecimal(PMap_order)){ //if bitsmap's bit is 0 and is not decimal, return NULL
-				newField[0] = 0x00; 
+				newField[0] = 0x80; //need to think about this character
 				return newField;
 			}
 		}
@@ -652,10 +655,21 @@ int pMapCheck(__uint32_t PMap, unsigned int PMap_length, __uint32_t noCurrentFie
 __uint32_t fieldLength(__uint8_t* field){
 	__uint8_t* aux = field;
 	__int32_t counter = 0;
-	while(*aux){
+
+	int stop = 1;
+	while(stop){
 		counter++;
+		if(*aux >> 7 & 0b00000001){ //if MSB is 1 -> last byte of the field -> so stop in the next loop 
+			stop = 0;
+		}
 		*aux++;
 	}
+	
+	/*while(*aux){
+		//printf("%02x ", *aux);
+		counter++;
+		*aux++;
+	}*/
 	return counter;
 }
 
@@ -666,9 +680,7 @@ FILE* openFile(char* fileName) {
 }
 
 void test(){
-	char str1[1000];
-	strcpy(str1, "what");
-	char* str2 = "what";
+	__uint8_t field[8] = {0x23, 0x61, 0x18, 0x63, 0x0f, 0x00, 0x7b, 0x90};
 
-	printf("\n %d \n", strcmp(str1, str2));
+	printf("\n\n %ld \n\n ", bytetoInt64Decoder(field));
 }
