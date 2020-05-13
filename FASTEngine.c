@@ -76,7 +76,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	__uint32_t LastTradeDate = 0, PriceAdjustmentMethod = 0, PriceLimitType = 0, PriceBandMidpointPriceType = 0;
 	__uint64_t SecurityID = 0, TradeVolume = 0, AvgDailyTradedQty = 0, ExpireDate = 0, EarlyTermination = 0, MaxTradeVol = 0;
 	__int64_t MDEntrySize = 0;
-	char MDEntryType[1000];
+	char MDEntryType[1000] = "0";
 	char QuoteCondition[1000];
 	char PriceType[1000];
 	char MDStreamID[1000];
@@ -338,15 +338,10 @@ void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
 
     	if((field[field_length-1] >> 7) & 0b00000001){
     		noTemplateField++;
-    		if(noTemplateField == 3){ //&& (pmap >><< fieldOrder)
+    		if(noTemplateField == 3){
 				MsgSeqNum = bytetoInt32Decoder(field);
 			}
 			else if(noTemplateField == 4){
-				printf(" SendingTime: ");
-				for(int i=0; i < field_length; i++){
-					printf("%02x ", (unsigned int) field[i]); 
-				}
-				printf("\n");
 				SendingTime = bytetoInt64Decoder(field);
 			}
 			else if(!(noTemplateField == 0 || noTemplateField == 1 || noTemplateField == 2)){
@@ -497,17 +492,19 @@ float getFieldD(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_le
 
 	if(PMap_order > 0){
 		if(isDecimal(PMap_order)){ //sure if the field is decimal
-			if(!(pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 0
-				exp=-2; //so there is no exp, then is no exp in the msg, so the default is -2
-				ptrMant = getField(newField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //get the mantissa
-				mant = bytetoInt64Decoder(ptrMant); //decode the mantissa
-			}
-			else{ //if the bit is 1
+			if((pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 1
 				ptrExp = getField(newField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //there is a exp in the msg
 				if(*ptrExp != 0x80){ //if it is no zero
 					ptrMant = getField(newField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //get the mantissa
 					exp = bytetoInt32Decoder(ptrExp); //decode the exp
 					mant = bytetoInt64Decoder(ptrMant); //decode the mant
+				}
+			}
+			else{ //if the bit is 0
+				if(PMap_order == MDENTRYPX || PMap_order == MDENTRYINTERESTRATE){ //default exp = -2
+					exp=-2; //so there is no exp, then is no exp in the msg, so the default is -2
+					ptrMant = getField(newField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //get the mantissa
+					mant = bytetoInt64Decoder(ptrMant); //decode the mantissa
 				}
 			}
 		}
@@ -521,6 +518,9 @@ int isDecimal(unsigned int PMap_order){
 	switch(PMap_order){
 		case MDENTRYPX : return 1;
 		case MDENTRYINTERESTRATE : return 1;
+		case LOWLIMITPRICE : return 1;
+		case HIGHLIMITPRICE : return 1;
+		case TRADINGREFERENCEPRICE: return 1;
 		default : return 0;
 	}
 }
@@ -626,16 +626,21 @@ char* bytetoStringDecoder(__uint8_t* field){
 	/*if(field_length == 1)
 		field_length = 2;*/
 
-	for(int i = 0; i < field_length + 1; i++){
-		if((field[i] >> 7) & 0b00000001){ //if MSB is 1
-			field[i] = field[i] << 1; //save only the 7 LSB in a 8 bits buffer
-        	field[i] = field[i] >> 1; //
+	if(*field >> 7 & 0b00000001){
+		strcpy(result, "NULL");
+	}
+	else{
+		for(int i = 0; i < field_length + 1; i++){
+			if((field[i] >> 7) & 0b00000001){ //if MSB is 1
+				field[i] = field[i] << 1; //save only the 7 LSB in a 8 bits buffer
+	        	field[i] = field[i] >> 1; //
+			}
+			result[i] = field[i];
 		}
-		result[i] = field[i];
 	}
 
-	if(field[0] == 0x00)
-		strcpy(result, "NULL");
+	//if(field[0] == 0x00)
+		
 
 	strcpy(field, result);
 	return field;
@@ -664,12 +669,6 @@ __uint32_t fieldLength(__uint8_t* field){
 		}
 		*aux++;
 	}
-	
-	/*while(*aux){
-		//printf("%02x ", *aux);
-		counter++;
-		*aux++;
-	}*/
 	return counter;
 }
 
@@ -677,10 +676,4 @@ FILE* openFile(char* fileName) {
    static FILE* file;
    file = fopen(fileName, "rb"); 
    return file;
-}
-
-void test(){
-	__uint8_t field[8] = {0x23, 0x61, 0x18, 0x63, 0x0f, 0x00, 0x7b, 0x90};
-
-	printf("\n\n %ld \n\n ", bytetoInt64Decoder(field));
 }

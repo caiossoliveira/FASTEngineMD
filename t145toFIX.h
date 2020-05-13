@@ -24,8 +24,7 @@ void t145toFIX(
 	#define PRINTD(file, var) if(var > 0.00) printf(file, var)	//print for decimals
 	#define PRINTS(file, var) if(strcmp(var, "NULL") != 0) printf(file, var)	//print for strings
 
-	printf("\n\n");
-	printf("------------------------------------------------F-I-X------------------------------------------------\n");
+	printf("\n   ---------------------------------------------F-I-X---------------------------------------------\n");
 
 	const char* ApplVerID = "9";
 	const char* MsgType = "X";
@@ -44,7 +43,7 @@ void t145toFIX(
 	if(NoMDEntries > 0){ //sequence
 		//printf(" MDEntriesSequence_PMap: %d \n", MDEntriesSequence_PMap);
 		printf(" 279=%d |", MDUpdateAction);
-		PRINTS(" 269=%s |", MDEntryType);
+		printf(" 269=%s |", MDEntryType);
 		printf(" 22=%d |", SecurityIDSource);
 		PRINTS(" 207=%s |", SecurityExchange);
 		printf(" 48=%ld |", SecurityID);
@@ -61,13 +60,13 @@ void t145toFIX(
 		printf(" 37017=%d |", MDInsertTime);
 		PRINTS(" 1500=%s |", MDStreamID);
 		PRINTS(" 15=%s |", Currency);
-		printf(" 451=%.2f |", NetChgPrevDay);
-		printf(" 287=%d |", SellerDays);
-		printf(" 1020=%ld |", TradeVolume);
+		PRINTD(" 451=%.2f |", NetChgPrevDay);
+		PRINTI(" 287=%d |", SellerDays);
+		PRINTI(" 1020=%ld |", TradeVolume);
 		PRINTS(" 274=%s |", TickDirection);
 		PRINTS(" 277=%s |", TradeCondition);
-		printf(" 336=%d |", TradingSessionID);
-		printf(" 286=%d |", OpenCloseSettlFlag);
+		PRINTI(" 336=%d |", TradingSessionID);
+		PRINTI(" 286=%d |", OpenCloseSettlFlag);
 		PRINTS(" 37=%s |", OrderID);
 		PRINTS(" 1003=%s |", TradeID);
 		PRINTS(" 288=%s |", MDEntryBuyer);
@@ -94,5 +93,6 @@ void t145toFIX(
 		PRINTI(" 37100=%ld", IndexSeq);
 	}
 
+	printf("\n   -----------------------------------------------------------------------------------------------   ");
 	printf("\n-----------------------------------------------------------------------------------------------------\n\n");
 }
