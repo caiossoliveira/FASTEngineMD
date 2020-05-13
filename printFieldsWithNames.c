@@ -8,6 +8,7 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
 void getFieldD(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length);
 __uint32_t fieldLength(__uint8_t* field);
 int pMapCheck(__uint32_t PMap, unsigned int PMap_length, __uint32_t noCurrentField);
+int isDecimal(unsigned int PMap_order);
 void templateDoNotIdentified(__uint16_t TemplateID);
 void readMessage(FILE* file);
 void identifyTemplate(__uint8_t* FASTMessage, unsigned int FASTMessage_length);
@@ -401,8 +402,10 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
 
 	if(PMap_order > 0){
 		if(!(pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 0 (!1)
-			newField[0] = 0x80; //need to think about this character
-			return newField;
+			if(!isDecimal(PMap_order)){ //if bitsmap's bit is 0 and is not decimal, return NULL
+				newField[0] = 0x80; //need to think about this character
+				return newField;
+			}
 		}
 	}
 
@@ -428,30 +431,43 @@ void getFieldD(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_len
 	}
 
 	if(PMap_order > 0){
-		if(!(pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 0
-			printf("-2 \n           ");
-			ptrMant = getField(newField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); 
-			n = fieldLength(ptrMant); 
-			for(int i = 0; i < n; i++){ 
-				printf(" %02x", *ptrMant++); 
-			}
-		}
-		else{ //if the bit is 1
-			ptrExp = getField(newField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //there is a exp in the msg
-			n = fieldLength(ptrExp); 
-			aux = ptrExp;
-			for(int i = 0; i < n; i++){ 
-				printf("%02x ", *aux++); 
-			}
-			if(*ptrExp != 0x80){ //if it is no zero
-				printf("\n           ");
+		if(isDecimal(PMap_order)){ //sure if the field is decimal
+			if(!(pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 0
+				printf("-2 \n           ");
 				ptrMant = getField(newField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); 
 				n = fieldLength(ptrMant); 
 				for(int i = 0; i < n; i++){ 
-					printf("%02x ", *ptrMant++); 
+					printf(" %02x", *ptrMant++); 
+				}
+			}
+			else{ //if the bit is 1
+				ptrExp = getField(newField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //there is a exp in the msg
+				n = fieldLength(ptrExp); 
+				aux = ptrExp;
+				for(int i = 0; i < n; i++){ 
+					printf("%02x ", *aux++); 
+				}
+				if(*ptrExp != 0x80){ //if it is no zero
+					printf("\n           ");
+					ptrMant = getField(newField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); 
+					n = fieldLength(ptrMant); 
+					for(int i = 0; i < n; i++){ 
+						printf("%02x ", *ptrMant++); 
+					}
 				}
 			}
 		}
+	}
+}
+
+int isDecimal(unsigned int PMap_order){
+	switch(PMap_order){
+		case MDENTRYPX : return 1;
+		case MDENTRYINTERESTRATE : return 1;
+		case LOWLIMITPRICE : return 1;
+		case HIGHLIMITPRICE : return 1;
+		case TRADINGREFERENCEPRICE: return 1;
+		default : return 0;
 	}
 }
 
