@@ -432,15 +432,7 @@ void getFieldD(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_len
 
 	if(PMap_order > 0){
 		if(isDecimal(PMap_order)){ //sure if the field is decimal
-			if(!(pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 0
-				printf("-2 \n           ");
-				ptrMant = getField(newField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); 
-				n = fieldLength(ptrMant); 
-				for(int i = 0; i < n; i++){ 
-					printf(" %02x", *ptrMant++); 
-				}
-			}
-			else{ //if the bit is 1
+			if((pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 1
 				ptrExp = getField(newField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //there is a exp in the msg
 				n = fieldLength(ptrExp); 
 				aux = ptrExp;
@@ -453,6 +445,16 @@ void getFieldD(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_len
 					n = fieldLength(ptrMant); 
 					for(int i = 0; i < n; i++){ 
 						printf("%02x ", *ptrMant++); 
+					}
+				}
+			}
+			else{ //if the bit is 0
+				if(PMap_order == MDENTRYPX || PMap_order == MDENTRYINTERESTRATE){
+					printf("-2 \n           ");
+					ptrMant = getField(newField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); 
+					n = fieldLength(ptrMant); 
+					for(int i = 0; i < n; i++){ 
+						printf(" %02x", *ptrMant++); 
 					}
 				}
 			}
