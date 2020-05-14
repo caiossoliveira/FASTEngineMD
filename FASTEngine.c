@@ -59,8 +59,9 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	#define TRADINGREFERENCEPRICE 27
 	#define UNDERLYINGPXTYPE 1
 
-	#define COPY *aux != 0x00
-	#define INCREMENT aux[0] > 0x00
+	#define COPY *aux != 0x00 //if bitmap's bit is no 0
+	#define INCREMENT *aux != 0x00 //if bitmap's bit is no 0
+	#define DELTA *aux != 0x00 //if bitmap's bit is no 0
 
 	__uint8_t* ptr_FASTMessage = FASTMessage+3; //MsgSeqNum is the first here but the third in the message
 	__uint8_t field[7000] = {0x80};
@@ -157,7 +158,9 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		}
 		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		MDEntrySize = bytetoInt64Decoder(aux);
+		if(DELTA){
+			MDEntrySize = bytetoInt64Decoder(aux);
+		}
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYDATE, MDEntriesSequence_PMap_length);
 		if(COPY){
