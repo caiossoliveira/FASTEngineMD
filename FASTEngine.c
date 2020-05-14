@@ -60,7 +60,6 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	#define UNDERLYINGPXTYPE 1
 
 	#define COPY *aux != 0x00
-	#define STR_COPY strcmp(aux, "NULL") != 0 //different of "NULL"
 	#define INCREMENT aux[0] > 0x00
 
 	__uint8_t* ptr_FASTMessage = FASTMessage+3; //MsgSeqNum is the first here but the third in the message
@@ -77,17 +76,17 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	__uint64_t SecurityID = 0, TradeVolume = 0, AvgDailyTradedQty = 0, ExpireDate = 0, EarlyTermination = 0, MaxTradeVol = 0;
 	__int64_t MDEntrySize = 0;
 	char MDEntryType[1000] = "0";
-	char QuoteCondition[1000];
-	char PriceType[1000];
-	char MDStreamID[1000];
-	char Currency[1000];
-	char TickDirection[1000];
-	char TradeCondition[1000];
-	char OrderID[1000];
-	char TradeID[1000];
-	char MDEntryBuyer[1000];
-	char MDEntrySeller[1000];
-	char PriceBandType[1000];
+	char QuoteCondition[1000] = "NULL";
+	char PriceType[1000] = "NULL";
+	char MDStreamID[1000] = "NULL";
+	char Currency[1000] = "NULL";
+	char TickDirection[1000] = "NULL";
+	char TradeCondition[1000] = "NULL";
+	char OrderID[1000] = "NULL";
+	char TradeID[1000] = "NULL";
+	char MDEntryBuyer[1000] = "NULL";
+	char MDEntrySeller[1000] = "NULL";
+	char PriceBandType[1000] = "NULL";
 	float MDEntryPx = 0.0, MDEntryInterestRate = 0.0, NetChgPrevDay = 0.0, LowLimitPrice = 0.0, HighLimitPrice = 0.0;
 	float TradingReferencePrice = 0.0;
 	//SequenceUnderlyings
@@ -179,9 +178,8 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		strcpy(MDStreamID, bytetoStringDecoder(aux));
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, CURRENCY, MDEntriesSequence_PMap_length);
-		if(STR_COPY){
+		if(COPY)
 			strcpy(Currency, bytetoStringDecoder(aux));
-		}
 		
 		NetChgPrevDay = getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, NETCHGPREVDAY, MDEntriesSequence_PMap_length);
 		
