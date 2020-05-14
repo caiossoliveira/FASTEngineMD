@@ -59,7 +59,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	#define TRADINGREFERENCEPRICE 27
 	#define UNDERLYINGPXTYPE 1
 
-	#define COPY aux[0] > 0x00
+	#define COPY *aux != 0x00
 	#define STR_COPY strcmp(aux, "NULL") != 0 //different of "NULL"
 	#define INCREMENT aux[0] > 0x00
 
@@ -116,11 +116,11 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
 		MDEntriesSequence_PMap = bytetoInt32Decoder(aux);
 		MDEntriesSequence_PMap_length = fieldLength(aux);
-
+		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDUPDATEACTION, MDEntriesSequence_PMap_length);
 		if(COPY) //if pMap is 1
 			MDUpdateAction = bytetoInt32Decoder(aux); //copy
-		
+
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYTYPE, MDEntriesSequence_PMap_length);
 		if(COPY) //if pMap is 1
 			strcpy(MDEntryType, bytetoStringDecoder(aux));
@@ -461,7 +461,7 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
 	if(PMap_order > 0){
 		if(!(pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 0 (!1)
 			if(!isDecimal(PMap_order)){ //if bitsmap's bit is 0 and is not decimal, return NULL
-				newField[0] = 0x80; //need to think about this character
+				newField[0] = 0x00; //need to think about this character
 				return newField;
 			}
 		}
@@ -626,7 +626,7 @@ char* bytetoStringDecoder(__uint8_t* field){
 	/*if(field_length == 1)
 		field_length = 2;*/
 
-	if(*field >> 7 & 0b00000001){
+	if(*field == 0x00 || *field == 0x80 ){ //if the bitmap is 0, the value is 0x00. if the field havent bit (optional), the value is 0x80 //*field >> 7 & 0b00000001){
 		strcpy(result, "NULL");
 	}
 	else{
@@ -638,9 +638,6 @@ char* bytetoStringDecoder(__uint8_t* field){
 			result[i] = field[i];
 		}
 	}
-
-	//if(field[0] == 0x00)
-		
 
 	strcpy(field, result);
 	return field;
