@@ -64,23 +64,25 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	#define DELTA *aux != 0x00 //if bitmap's bit is no 0
 
 	__uint8_t* ptr_FASTMessage = FASTMessage+3; //MsgSeqNum is the first here but the third in the message
-	__uint8_t field[7000] = {0x80};
+	__uint8_t field[7000] = {0x80}; //The FIX/FAST encoded Market Data is no larger than 1420 bytes including the header
 
 	//Template
 	__uint32_t MsgSeqNum = 0, TradeDate = 0;
 	__uint64_t SendintTime = 0;
 	//SequenceMDEntries
-	__uint32_t NoMDEntries = 0, MDEntriesSequence_PMap = 0, MDEntriesSequence_PMap_length = 0, MDUpdateAction = 1;
-	__uint32_t RptSeq = 0, NumberOfOrders = 0, MDEntryTime = 0, MDEntryDate = 0, MDInsertDate = 0, MDInsertTime = 0;
+	__uint32_t NoMDEntries = 0, MDEntriesSequence_PMap = 0, MDEntriesSequence_PMap_length = 0;
+	__uint32_t NumberOfOrders = 0;
 	__uint32_t SellerDays = 0, TradingSessionID = 0, OpenCloseSettlFlag = 0, MDEntryPositionNo = 0, SettPriceType = 0;
 	__uint32_t LastTradeDate = 0, PriceAdjustmentMethod = 0, PriceLimitType = 0, PriceBandMidpointPriceType = 0;
-	__uint64_t SecurityID = 0, TradeVolume = 0, AvgDailyTradedQty = 0, ExpireDate = 0, EarlyTermination = 0, MaxTradeVol = 0;
-	__int64_t MDEntrySize = 0;
-	char MDEntryType[1000] = "0";
+	__uint64_t AvgDailyTradedQty = 0, ExpireDate = 0, EarlyTermination = 0, MaxTradeVol = 0;
+	static __uint32_t MDUpdateAction = 1, RptSeq = 0, MDEntryTime = 0, MDEntryDate = 0, MDInsertDate = 0, MDInsertTime = 0;
+	static __uint64_t SecurityID = 0, TradeVolume = 0;
+	static __int64_t MDEntrySize = 0;
+	static char MDEntryType[1000] = "0";
 	char QuoteCondition[1000] = "NULL";
 	char PriceType[1000] = "NULL";
 	char MDStreamID[1000] = "NULL";
-	char Currency[1000] = "NULL";
+	static char Currency[1000] = "NULL";
 	char TickDirection[1000] = "NULL";
 	char TradeCondition[1000] = "NULL";
 	char OrderID[1000] = "NULL";
@@ -92,8 +94,10 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	float TradingReferencePrice = 0.0;
 	//SequenceUnderlyings
 	__uint32_t NoUnderlyings = 0, UnderlyingPXType = 0;
-	__uint64_t UnderlyingSecurityID = 0, IndexSeq = 0;
+	static __uint64_t UnderlyingSecurityID = 0; 
 	float UnderlyingPx = 0.0;
+	//template
+	__uint64_t IndexSeq = 0;
 
 	__uint8_t* aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
 	MsgSeqNum = bytetoInt32Decoder(aux);
@@ -114,16 +118,31 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 
 	if(NoMDEntries > 0){ //sequence
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+		printf(" Length: %d \n", fieldLength(aux));
 		MDEntriesSequence_PMap = bytetoInt32Decoder(aux);
 		MDEntriesSequence_PMap_length = fieldLength(aux);
+
+		printf("\n ");
+		for(int i = 0; i < MDEntriesSequence_PMap_length * 8; i++){
+			printf("%d", pMapCheck(MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, i+1));
+		}
+		printf("\n");
 		
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDUPDATEACTION, MDEntriesSequence_PMap_length);
-		if(COPY) //if pMap is 1
+		if(COPY){ //if pMap is 1 (the value is present in the stream)
 			MDUpdateAction = bytetoInt32Decoder(aux); //copy
+		}
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYTYPE, MDEntriesSequence_PMap_length);
-		if(COPY) //if pMap is 1
+		if(COPY){ //if pMap is 1
 			strcpy(MDEntryType, bytetoStringDecoder(aux));
+		}
+		else{
+			if(strcmp(MDEntryType, "NULL") == 0){ //undefined
+				strcpy(MDEntryType, "0");
+			}
+		}
+
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, SECURITYID, MDEntriesSequence_PMap_length);
 		if(COPY)
