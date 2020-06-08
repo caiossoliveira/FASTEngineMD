@@ -22,7 +22,7 @@ void t145toFIX(
 
 	#define PRINTI(file, var) if(var > 0) printf(file, var)	//print for int 
 	#define PRINTD(file, var) if(var > 0.00) printf(file, var)	//print for decimals
-	#define PRINTS(file, var) if(strcmp(var, "NULL") != 0) printf(file, var)	//print for strings
+	#define PRINTS(file, var) if(strcmp(var, "EMPTY") != 0) printf(file, var)	//(different of NULL) print for strings
 
 	printf("\n   ---------------------------------------------F-I-X---------------------------------------------\n");
 
@@ -32,8 +32,8 @@ void t145toFIX(
 	const char SecurityExchange[4] = "BVMF";
 
 	//template
-	printf(" 1128=%s |", ApplVerID);
-	printf(" 35=%s |", MsgType);
+	PRINTS(" 1128=%s |", ApplVerID);
+	PRINTS(" 35=%s |", MsgType);
 	printf(" 34=%d |", MsgSeqNum);
 	printf(" 52=%ld |", SendintTime);
 	printf(" 75=%d |", TradeDate);
@@ -43,7 +43,7 @@ void t145toFIX(
 	if(NoMDEntries > 0){ //sequence
 		//printf(" MDEntriesSequence_PMap: %d \n", MDEntriesSequence_PMap);
 		printf(" 279=%d |", MDUpdateAction);
-		printf(" 269=%s |", MDEntryType);
+		PRINTS(" 269=%s |", MDEntryType);
 		printf(" 22=%d |", SecurityIDSource);
 		PRINTS(" 207=%s |", SecurityExchange);
 		printf(" 48=%ld |", SecurityID);

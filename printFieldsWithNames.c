@@ -53,7 +53,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	#define UNDERLYINGPXTYPE 1
 
 	#define PRINT \
-		n = fieldLength(aux); \
+		n = *aux == 0x00 ? 1 : fieldLength(aux); \
 		for(int i = 0; i < n; i++){ \
 			printf("%02x ", *aux++); \
 		}
@@ -88,6 +88,9 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
 		MDEntriesSequence_PMap = bytetoInt32Decoder(aux);
 		MDEntriesSequence_PMap_length = fieldLength(aux);
+
+		printf("\n MDEntriesSequence_PMap: ");
+		PRINT;
 
 		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDUPDATEACTION, MDEntriesSequence_PMap_length);
 		printf("\n MDUpdateAction: ");
@@ -403,7 +406,7 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
 	if(PMap_order > 0){
 		if(!(pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 0 (!1)
 			if(!isDecimal(PMap_order)){ //if bitsmap's bit is 0 and is not decimal, return NULL
-				newField[0] = 0x80; //need to think about this character
+				newField[0] = 0x00; //need to think about this character
 				return newField;
 			}
 		}
