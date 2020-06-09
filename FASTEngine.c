@@ -17,6 +17,7 @@ char* getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length);
 __uint32_t int32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t initialValue, int operator, int PMapis1);
 __uint64_t int64Operator(__uint64_t value, __uint64_t previousValue, __uint64_t initialValue, int operator, int PMapis1);
+char* stringOperator(char* value, char* previousValue, char* initialValue, int operator, int PMapIs1);
 char* bytetoStringDecoder(__uint8_t* field);
 float bytetoDecimalDecoder(__uint8_t* field);
 __uint32_t bytetoInt32Decoder(__uint8_t* field);
@@ -599,25 +600,28 @@ char* getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap
 		*value = 0x80; //null
 	}
 
-	if(operator == NONEOPERATOR){
-		return bytetoStringDecoder(value);
-	}
-    else if(operator == COPY){ //there is operator and is COPY
-    	if(PmapIs1){ //if pmap is 1 //the value is present in the stream
-    		return bytetoStringDecoder(value); //copy //the value in the stream is the new value
-    	}
-    	else{ //value is not present in the stream
-    		if(strcmp(previousValue, "UNDEFINED") != 0 && strcmp(previousValue, "EMPTY") != 0){ //assigned
-    			return bytetoStringDecoder(previousValue); //the value of the field is the previous value
-    		}
-    		else if(strcmp(previousValue, "UNDEFINED") == 0){ //undefined 
-				return initialValue; //the value of the field is the initial value
-			}
-			else if(strcmp(previousValue, "EMPTY") == 0){ //EMPTY
-				return "EMPTY";
-			}
-    	}
+	strcpy(value, stringOperator(value, previousValue, initialValue, operator, PmapIs1));
+
+	return bytetoStringDecoder(value);
+}
+
+char* stringOperator(char* value, char* previousValue, char* initialValue, int operator, int PMapIs1){
+	char aux[1500];
+	strcpy(aux, value);
+
+    if(operator == COPY && !PMapIs1){ //there is operator and is COPY
+		if(strcmp(previousValue, "UNDEFINED") != 0 && strcmp(previousValue, "EMPTY") != 0){ //assigned
+			strcpy(aux, previousValue); //the value of the field is the previous value
+		}
+		else if(strcmp(previousValue, "UNDEFINED") == 0){ //undefined 
+			strcpy(aux, initialValue); //the value of the field is the initial value
+		}
+		else if(strcmp(previousValue, "EMPTY") == 0){ //EMPTY
+			strcpy(aux, "EMPTY"); 
+		}
     }
+    strcpy(value, aux);
+    return value;
 }
 
 float getFieldD(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, unsigned int operator){
