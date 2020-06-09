@@ -64,9 +64,10 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	#define UNDERLYINGPXTYPE 1
 
 	#define NONEOPERATOR 0
-	#define COPY 1
-	#define INCREMENT 2
-	#define DELTA 3 
+	#define DEFAULT 1
+	#define COPY 2
+	#define INCREMENT 3
+	#define DELTA 4
 
 	#define NULLABLE 1
 	#define NON_NULLABLE 0
@@ -175,10 +176,6 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 
 		strcpy(MDStreamID, getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDSTREAMID, MDEntriesSequence_PMap_length, MDStreamID, NONEOPERATOR, initialValueC));
 
-		/*aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, CURRENCY, MDEntriesSequence_PMap_length);
-		if(COPY)
-			strcpy(Currency, bytetoStringDecoder(aux));*/
-
 		strcpy(Currency, getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, CURRENCY, MDEntriesSequence_PMap_length, Currency, COPY, initialValueC));
 		
 		NetChgPrevDay = getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, NETCHGPREVDAY, MDEntriesSequence_PMap_length, NONEOPERATOR);
@@ -203,7 +200,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 
 		strcpy(MDEntrySeller, getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYSELLER, MDEntriesSequence_PMap_length, MDEntrySeller, NONEOPERATOR, initialValueC));
 
-		MDEntryPositionNo = getField32I(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPOSITIONNO, MDEntriesSequence_PMap_length, MDEntryPositionNo, NONEOPERATOR, initialValueI, NON_NULLABLE);
+		MDEntryPositionNo = getField32I(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPOSITIONNO, MDEntriesSequence_PMap_length, MDEntryPositionNo, NONEOPERATOR, initialValueI, NULLABLE);
 			
 		SettPriceType = getField32I(&ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP, SettPriceType, NONEOPERATOR, initialValueI, NULLABLE);
 		
@@ -499,6 +496,32 @@ __uint32_t getField32I(__uint8_t** FASTMessage, int FASTMessage_length, __uint32
 			else if(field == 0){ //EMPTY
 				return 0;
 			}
+    	}
+    }
+    else if(operator == DELTA){
+    	int delta = 0, base = 0;
+    	if(PmapIs1){ //if pmap is 1 //the value is present in the stream
+    		delta = bytetoInt32Decoder(newField); //delta //the delta is present in the stream
+    	}
+    	else{ //value is not present in the stream
+    		if(field != UNDEFINED && field != 0){ //assigned
+    			base = previousValue;
+    		}
+    		else if(field == UNDEFINED){ //undefined 
+				base = initialValue; //the value of the field is the initial value
+			}
+			else if(field == 0){ //EMPTY
+				return 0;
+			}
+    	}
+    	value = base + delta;
+    }
+    else if(operator == DEFAULT){
+    	if(PmapIs1){ //if pmap is 1 //the value is present in the stream
+    		value = bytetoInt32Decoder(newField); //delta //the delta is present in the stream
+    	}
+    	else{
+    		value = initialValue;
     	}
     }
 
