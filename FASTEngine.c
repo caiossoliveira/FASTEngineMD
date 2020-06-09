@@ -535,7 +535,7 @@ __uint64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length, __uint32
 
 __uint64_t int64Operator(__uint64_t value, __uint64_t previousValue, __uint64_t initialValue, int operator, int PMapIs1){
 	__int64_t delta = 0, base = 0;
-	
+
 	if(operator == COPY && !PMapIs1){ //if the value isnt present in the stream, bcs if yes the value in the stream is the new value
 		if(previousValue != UNDEFINED && previousValue != 0){ //assigned
 			value = previousValue; //the value of the field is the previous value
@@ -578,25 +578,11 @@ __uint64_t int64Operator(__uint64_t value, __uint64_t previousValue, __uint64_t 
     return value;
 }
 
-char* getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, char* field, unsigned int operator, char* initialValue){
+char* getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, char* previousValue, unsigned int operator, char* initialValue){
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
-    int field_length = 0;
-
-    char previousValue[1500];
-    strcpy(previousValue, field);
-
-  	int thereIsOperator = 0;
-  	int thereIsPMap = 0;
-  	int PmapIs1 = 0;
-
-  	__uint8_t newField[7000];
-	for(int i = 0; i < 7000; i++){ //clean the buffer
-		newField[i] = 0x00;
-	}
-
-	if(operator != NONEOPERATOR){
-		thereIsOperator = 1;
-	}
+	__uint8_t streamValue[7000];
+    char value[1500];
+  	int thereIsPMap = 0, PmapIs1 = 0;
 
 	if(PMap_order > 0){ //if the field there's a bit representation in bitmap
 		thereIsPMap = 1;
@@ -606,34 +592,28 @@ char* getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap
 	}
 
 	if((thereIsPMap && PmapIs1) || !thereIsPMap){ //if the value is in the field (nullable or not)
-		for(int i = 0; i < FASTMessage_length; i++){
-			newField[field_length] = *(*FASTMessage); //newField gets the bytes of FASTMessage
-	    	field_length++;
-	    	*FASTMessage = *FASTMessage+1; //increments the address of the ptr
-	    	if((newField[field_length-1] >> 7) & 0b00000001){ //if it is the end of the fild
-		    	break;
-	    	}
-	    } 
+		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length);
+		strcpy(value, pt_value);
 	}
 	else{
-		*newField = 0x80; //null
+		*value = 0x80; //null
 	}
 
 	if(operator == NONEOPERATOR){
-		return bytetoStringDecoder(newField);
+		return bytetoStringDecoder(value);
 	}
     else if(operator == COPY){ //there is operator and is COPY
     	if(PmapIs1){ //if pmap is 1 //the value is present in the stream
-    		return bytetoStringDecoder(newField); //copy //the value in the stream is the new value
+    		return bytetoStringDecoder(value); //copy //the value in the stream is the new value
     	}
     	else{ //value is not present in the stream
-    		if(strcmp(field, "UNDEFINED") != 0 && strcmp(field, "EMPTY") != 0){ //assigned
-    			return bytetoStringDecoder(field); //the value of the field is the previous value
+    		if(strcmp(previousValue, "UNDEFINED") != 0 && strcmp(previousValue, "EMPTY") != 0){ //assigned
+    			return bytetoStringDecoder(previousValue); //the value of the field is the previous value
     		}
-    		else if(strcmp(field, "UNDEFINED") == 0){ //undefined 
+    		else if(strcmp(previousValue, "UNDEFINED") == 0){ //undefined 
 				return initialValue; //the value of the field is the initial value
 			}
-			else if(strcmp(field, "EMPTY") == 0){ //EMPTY
+			else if(strcmp(previousValue, "EMPTY") == 0){ //EMPTY
 				return "EMPTY";
 			}
     	}
