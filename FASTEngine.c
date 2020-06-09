@@ -455,40 +455,27 @@ __uint32_t getField32I(__uint8_t** FASTMessage, int FASTMessage_length, __uint32
 
 __uint32_t int32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t initialValue, int operator, int PMapIs1){
 	
-	if(operator == NONEOPERATOR){
-		value = value;
-	}
-    else if(operator == COPY){ //there is operator and is COPY
-    	if(PMapIs1){ //if pmap is 1 //the value is present in the stream
-    		value = value; //copy //the value in the stream is the new value
-    	}
-    	else{ //value is not present in the stream
-    		if(previousValue != UNDEFINED && previousValue != 0){ //assigned
-    			value = previousValue; //the value of the field is the previous value
-    		}
-    		else if(previousValue == UNDEFINED){ //undefined 
-				value = initialValue; //the value of the field is the initial value
-			}
-			else if(previousValue == 0){ //EMPTY
-				value = 0;
-			}
-    	}
+	if(operator == COPY && !PMapIs1){ //if the value isnt present in the stream, bcs if yes the value in the stream is the new value
+		if(previousValue != UNDEFINED && previousValue != 0){ //assigned
+			value = previousValue; //the value of the field is the previous value
+		}
+		else if(previousValue == UNDEFINED){ //undefined 
+			value = initialValue; //the value of the field is the initial value
+		}
+		else if(previousValue == 0){ //EMPTY
+			value = 0;
+		}
     }
-    else if(operator == INCREMENT){
-    	if(PMapIs1){ //if pmap is 1 //the value is present in the stream
-    		value = value; //copy //the value in the stream is the new value
-    	}
-    	else{ //value is not present in the stream
-    		if(previousValue != UNDEFINED && previousValue != 0){ //assigned
-    			value = value + 1; //the value of the field is the previous value +1
-    		}
-    		else if(previousValue == UNDEFINED){ //undefined 
-				value = initialValue; //the value of the field is the initial value
-			}
-			else if(previousValue == 0){ //EMPTY
-				value = 0;
-			}
-    	}
+    else if(operator == INCREMENT && !PMapIs1){
+		if(previousValue != UNDEFINED && previousValue != 0){ //assigned
+			value++; //the value of the field is the previous value +1
+		}
+		else if(previousValue == UNDEFINED){ //undefined 
+			value = initialValue; //the value of the field is the initial value
+		}
+		else if(previousValue == 0){ //EMPTY
+			value = 0;
+		}
     }
     else if(operator == DELTA){
     	int delta = 0, base = 0;
@@ -508,13 +495,8 @@ __uint32_t int32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t 
     	}
     	value = base + delta;
     }
-    else if(operator == DEFAULT){
-    	if(PMapIs1){ //if pmap is 1 //the value is present in the stream
-    		value = value; //delta //the delta is present in the stream
-    	}
-    	else{
-    		value = initialValue;
-    	}
+    else if(operator == DEFAULT && !PMapIs1){ 
+		value = initialValue;
     }
 
     return value;
