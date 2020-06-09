@@ -15,6 +15,7 @@ __uint64_t getField64I(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMes
 float getFieldD(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, unsigned int operator);
 char* getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, char* field, unsigned int operator, char* initialValue);
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length);
+__uint32_t int32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t initialValue, int operator, int PMapis1);
 char* bytetoStringDecoder(__uint8_t* field);
 float bytetoDecimalDecoder(__uint8_t* field);
 __uint32_t bytetoInt32Decoder(__uint8_t* field);
@@ -422,25 +423,11 @@ void templateDoNotIdentified(__uint16_t TemplateID){
 	printf(" TemplateID do not identified: %d \n", TemplateID);
 }
 
-__uint32_t getField32I(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, __uint32_t field, unsigned int operator, __uint32_t initialValue, unsigned int isNullable){
+__uint32_t getField32I(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, __uint32_t previousValue, unsigned int operator, __uint32_t initialValue, unsigned int isNullable){
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
-    int field_length = 0;
-
-    __uint32_t previousValue = field;
+	__uint8_t streamValue[7000];
     __uint32_t value;
-
-  	int thereIsOperator = 0;
-  	int thereIsPMap = 0;
-  	int PmapIs1 = 0;
-
-    __uint8_t newField[7000];
-	for(int i = 0; i < 7000; i++){ //clean the buffer
-		newField[i] = 0x00;
-	}
-
-	if(operator != NONEOPERATOR){
-		thereIsOperator = 1;
-	}
+  	int thereIsPMap = 0, PmapIs1 = 0;
 
 	if(PMap_order > 0){
 		thereIsPMap = 1;
@@ -449,93 +436,88 @@ __uint32_t getField32I(__uint8_t** FASTMessage, int FASTMessage_length, __uint32
 		}
 	}
 
-	if((thereIsPMap && PmapIs1) || !thereIsPMap){ //if the value is in the field (nullable or not)
-		for(int i = 0; i < FASTMessage_length; i++){
-			newField[field_length] = *(*FASTMessage); //newField gets the bytes of FASTMessage
-	    	field_length++;
-	    	*FASTMessage = *FASTMessage+1; //increments the address of the ptr
-	    	if((newField[field_length-1] >> 7) & 0b00000001){ //if it is the end of the fild
-		    	break;
-	    	}
-	    } 
+	if((thereIsPMap && PmapIs1) || !thereIsPMap){ //if the value is in the stream (nullable or not)
+		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length);
+		value = bytetoInt32Decoder(pt_value);
 	}
 	else{
-		*newField = 0x80; //null
+		value = 0x00; //null
 	}
 
+	value = int32Operator(value, previousValue, initialValue, operator, PmapIs1);
+
+    if(isNullable == NULLABLE && value != 0x00){
+		value--; //If an integer is nullable, every non-negative integer is incremented by 1 before it is encoded
+	}
+
+	return value;
+}
+
+__uint32_t int32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t initialValue, int operator, int PMapIs1){
+	
 	if(operator == NONEOPERATOR){
-		value = bytetoInt32Decoder(newField);
+		value = value;
 	}
     else if(operator == COPY){ //there is operator and is COPY
-    	if(PmapIs1){ //if pmap is 1 //the value is present in the stream
-    		value = bytetoInt32Decoder(newField); //copy //the value in the stream is the new value
+    	if(PMapIs1){ //if pmap is 1 //the value is present in the stream
+    		value = value; //copy //the value in the stream is the new value
     	}
     	else{ //value is not present in the stream
-    		if(field != UNDEFINED && field != 0){ //assigned
-    			value = bytetoInt32Decoder(newField); //the value of the field is the previous value
+    		if(previousValue != UNDEFINED && previousValue != 0){ //assigned
+    			value = previousValue; //the value of the field is the previous value
     		}
-    		else if(field == UNDEFINED){ //undefined 
+    		else if(previousValue == UNDEFINED){ //undefined 
 				value = initialValue; //the value of the field is the initial value
 			}
-			else if(field == 0){ //EMPTY
-				return 0;
+			else if(previousValue == 0){ //EMPTY
+				value = 0;
 			}
     	}
     }
     else if(operator == INCREMENT){
-    	if(PmapIs1){ //if pmap is 1 //the value is present in the stream
-    		value = bytetoInt32Decoder(newField); //copy //the value in the stream is the new value
+    	if(PMapIs1){ //if pmap is 1 //the value is present in the stream
+    		value = value; //copy //the value in the stream is the new value
     	}
     	else{ //value is not present in the stream
-    		if(field != UNDEFINED && field != 0){ //assigned
-    			value = bytetoInt32Decoder(newField) + 1; //the value of the field is the previous value +1
+    		if(previousValue != UNDEFINED && previousValue != 0){ //assigned
+    			value = value + 1; //the value of the field is the previous value +1
     		}
-    		else if(field == UNDEFINED){ //undefined 
+    		else if(previousValue == UNDEFINED){ //undefined 
 				value = initialValue; //the value of the field is the initial value
 			}
-			else if(field == 0){ //EMPTY
-				return 0;
+			else if(previousValue == 0){ //EMPTY
+				value = 0;
 			}
     	}
     }
     else if(operator == DELTA){
     	int delta = 0, base = 0;
-    	if(PmapIs1){ //if pmap is 1 //the value is present in the stream
-    		delta = bytetoInt32Decoder(newField); //delta //the delta is present in the stream
+    	if(PMapIs1){ //if pmap is 1 //the value is present in the stream
+    		delta = value; //delta //the delta is present in the stream
     	}
     	else{ //value is not present in the stream
-    		if(field != UNDEFINED && field != 0){ //assigned
+    		if(previousValue != UNDEFINED && previousValue != 0){ //assigned
     			base = previousValue;
     		}
-    		else if(field == UNDEFINED){ //undefined 
+    		else if(previousValue == UNDEFINED){ //undefined 
 				base = initialValue; //the value of the field is the initial value
 			}
-			else if(field == 0){ //EMPTY
-				return 0;
+			else if(previousValue == 0){ //EMPTY
+				value = 0;
 			}
     	}
     	value = base + delta;
     }
     else if(operator == DEFAULT){
-    	if(PmapIs1){ //if pmap is 1 //the value is present in the stream
-    		value = bytetoInt32Decoder(newField); //delta //the delta is present in the stream
+    	if(PMapIs1){ //if pmap is 1 //the value is present in the stream
+    		value = value; //delta //the delta is present in the stream
     	}
     	else{
     		value = initialValue;
     	}
     }
 
-    if(isNullable == NULLABLE){
-		if(bytetoInt32Decoder(newField) != 0x00){
-			return value - 1; //If an integer is nullable, every non-negative integer is incremented by 1 before it is encoded
-		}
-		else{
-			return value;
-		}	
-	}
-	else{
-		return value;
-	}
+    return value;
 }
 
 __uint64_t getField64I(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, unsigned int operator, unsigned int isNullable){
