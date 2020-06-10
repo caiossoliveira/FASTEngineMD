@@ -13,11 +13,11 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 __uint32_t getField32I(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, __uint32_t previousValue, unsigned int operator, __uint32_t initialValue, unsigned int isNullable);
 __uint64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, __uint64_t previousValue, unsigned int operator, __uint64_t initialValue, unsigned int isNullable);
 float getFieldD(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, unsigned int operator);
-char* getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, char* field, unsigned int operator, char* initialValue);
+void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, char* value, unsigned int operator, char* initialValue);
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length);
 __uint32_t int32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t initialValue, int operator, int PMapis1);
 __uint64_t int64Operator(__uint64_t value, __uint64_t previousValue, __uint64_t initialValue, int operator, int PMapis1);
-char* stringOperator(char* value, char* previousValue, char* initialValue, int operator, int PMapIs1);
+void stringOperator(char* value, char* streamValue, char* previousValue, char* initialValue, int operator, int PMapIs1);
 char* bytetoStringDecoder(__uint8_t* field);
 float bytetoDecimalDecoder(__uint8_t* field);
 __uint32_t bytetoInt32Decoder(__uint8_t* field);
@@ -146,13 +146,13 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 
 		MDUpdateAction = getField32I(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDUPDATEACTION, MDEntriesSequence_PMap_length, MDUpdateAction, COPY, NON_NULLABLE, 1);
 
-		strcpy(MDEntryType, getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYTYPE, MDEntriesSequence_PMap_length, MDEntryType, COPY, "0"));
+		getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYTYPE, MDEntriesSequence_PMap_length, MDEntryType, COPY, "0");
 
 		SecurityID = getField64I(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, SECURITYID, MDEntriesSequence_PMap_length, SecurityID, COPY, NON_NULLABLE, initialValueI);
 
 		RptSeq = getField32I(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, RPTSEQ, MDEntriesSequence_PMap_length, RptSeq, INCREMENT, NON_NULLABLE, initialValueI);
 
-		strcpy(QuoteCondition, getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, QUOTECONDITION, MDEntriesSequence_PMap_length, QuoteCondition, NONEOPERATOR, initialValueC));
+		getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, QUOTECONDITION, MDEntriesSequence_PMap_length, QuoteCondition, NONEOPERATOR, initialValueC);
 
 		MDEntryPx = getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPX, MDEntriesSequence_PMap_length, NONEOPERATOR);
 		
@@ -160,7 +160,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		
 		NumberOfOrders = getField32I(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, NUMBEROFORDERS, MDEntriesSequence_PMap_length, NumberOfOrders, NONEOPERATOR, initialValueI, NON_NULLABLE);
 
-		strcpy(PriceType, getFieldS(&ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP, PriceType, NONEOPERATOR, initialValueC));
+		getFieldS(&ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP, PriceType, NONEOPERATOR, initialValueC);
 
 		MDEntryTime = getField32I(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYTIME, MDEntriesSequence_PMap_length, MDEntryTime, COPY, initialValueI, NON_NULLABLE);
 		
@@ -177,9 +177,9 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	
 		MDInsertTime = getField32I(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDINSERTTIME, MDEntriesSequence_PMap_length, MDInsertTime, COPY, initialValueI, NULLABLE);
 
-		strcpy(MDStreamID, getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDSTREAMID, MDEntriesSequence_PMap_length, MDStreamID, NONEOPERATOR, initialValueC));
+		getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDSTREAMID, MDEntriesSequence_PMap_length, MDStreamID, NONEOPERATOR, initialValueC);
 
-		strcpy(Currency, getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, CURRENCY, MDEntriesSequence_PMap_length, Currency, COPY, initialValueC));
+		getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, CURRENCY, MDEntriesSequence_PMap_length, Currency, COPY, initialValueC);
 		
 		NetChgPrevDay = getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, NETCHGPREVDAY, MDEntriesSequence_PMap_length, NONEOPERATOR);
 		
@@ -187,21 +187,21 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		
 		TradeVolume = getField64I(&ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP, TradeVolume, NONEOPERATOR, initialValueI, NON_NULLABLE);
 
-		strcpy(TickDirection, getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, TICKDIRECTION, MDEntriesSequence_PMap_length, TickDirection, NONEOPERATOR, initialValueC));
+		getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, TICKDIRECTION, MDEntriesSequence_PMap_length, TickDirection, NONEOPERATOR, initialValueC);
 		
-		strcpy(TradeCondition, getFieldS(&ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP, TradeCondition, NONEOPERATOR, initialValueC));
+		getFieldS(&ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP, TradeCondition, NONEOPERATOR, initialValueC);
 
 		TradingSessionID = getField32I(&ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP, TradingSessionID, NONEOPERATOR, initialValueI, NULLABLE);
 		
 		OpenCloseSettlFlag = getField32I(&ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP, OpenCloseSettlFlag, NONEOPERATOR, initialValueI, NULLABLE);
 		
-		strcpy(OrderID, getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, ORDERID, MDEntriesSequence_PMap_length, OrderID, NONEOPERATOR, initialValueC));
+		getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, ORDERID, MDEntriesSequence_PMap_length, OrderID, NONEOPERATOR, initialValueC);
 
-		strcpy(TradeID, getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, TRADEID, MDEntriesSequence_PMap_length, TradeID, NONEOPERATOR, initialValueC));
+		getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, TRADEID, MDEntriesSequence_PMap_length, TradeID, NONEOPERATOR, initialValueC);
 
-		strcpy(MDEntryBuyer, getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYBUYER, MDEntriesSequence_PMap_length, MDEntryBuyer, NONEOPERATOR, initialValueC));
+		getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYBUYER, MDEntriesSequence_PMap_length, MDEntryBuyer, NONEOPERATOR, initialValueC);
 
-		strcpy(MDEntrySeller, getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYSELLER, MDEntriesSequence_PMap_length, MDEntrySeller, NONEOPERATOR, initialValueC));
+		getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYSELLER, MDEntriesSequence_PMap_length, MDEntrySeller, NONEOPERATOR, initialValueC);
 
 		MDEntryPositionNo = getField32I(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPOSITIONNO, MDEntriesSequence_PMap_length, MDEntryPositionNo, NONEOPERATOR, initialValueI, NULLABLE);
 			
@@ -211,7 +211,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 
 		PriceAdjustmentMethod = getField32I(&ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP, PriceAdjustmentMethod, NONEOPERATOR, initialValueI, NULLABLE);
 
-		strcpy(PriceBandType, getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, PRICEBANDTYPE, MDEntriesSequence_PMap_length, PriceBandType, NONEOPERATOR, initialValueC));
+		getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, PRICEBANDTYPE, MDEntriesSequence_PMap_length, PriceBandType, NONEOPERATOR, initialValueC);
 
 		PriceLimitType = getField32I(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, PRICELIMITTYPE, MDEntriesSequence_PMap_length, PriceLimitType, NONEOPERATOR, initialValueI, NULLABLE);
 		
@@ -579,11 +579,14 @@ __uint64_t int64Operator(__uint64_t value, __uint64_t previousValue, __uint64_t 
     return value;
 }
 
-char* getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, char* previousValue, unsigned int operator, char* initialValue){
+void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, char* value, unsigned int operator, char* initialValue){
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
-	__uint8_t streamValue[7000];
-    char value[1500];
+	__uint8_t streamField[7000];
+
   	int thereIsPMap = 0, PmapIs1 = 0;
+  	char previousValue[1500], auxValue[1500], streamValue[1500];
+
+  	strcpy(previousValue, value);
 
 	if(PMap_order > 0){ //if the field there's a bit representation in bitmap
 		thereIsPMap = 1;
@@ -593,35 +596,40 @@ char* getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap
 	}
 
 	if((thereIsPMap && PmapIs1) || !thereIsPMap){ //if the value is in the field (nullable or not)
-		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length);
-		strcpy(value, pt_value);
+		__uint8_t* pt_streamValue = getField(streamField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length);
+		strcpy(streamValue, pt_streamValue);
 	}
 	else{
-		*value = 0x80; //null
+		*streamValue = 0x80; //absent
 	}
 
-	strcpy(value, stringOperator(value, previousValue, initialValue, operator, PmapIs1));
+	strcpy(streamValue, bytetoStringDecoder(streamValue));
 
-	return bytetoStringDecoder(value);
+	stringOperator(auxValue, streamValue, previousValue, initialValue, operator, PmapIs1);
+
+	strcpy(value, auxValue);
+
 }
 
-char* stringOperator(char* value, char* previousValue, char* initialValue, int operator, int PMapIs1){
-	char aux[1500];
-	strcpy(aux, value);
+void stringOperator(char* value, char* streamValue, char* previousValue, char* initialValue, int operator, int PMapIs1){
+	char auxValue[1500];
+	strcpy(auxValue, value);
 
-    if(operator == COPY && !PMapIs1){ //there is operator and is COPY
+	if(operator == NONEOPERATOR || PMapIs1){
+		strcpy(auxValue, streamValue);
+	}
+    else if(operator == COPY && !PMapIs1){ //there is operator and is COPY
 		if(strcmp(previousValue, "UNDEFINED") != 0 && strcmp(previousValue, "EMPTY") != 0){ //assigned
-			strcpy(aux, previousValue); //the value of the field is the previous value
+			strcpy(auxValue, previousValue); //the value of the field is the previous value
 		}
 		else if(strcmp(previousValue, "UNDEFINED") == 0){ //undefined 
-			strcpy(aux, initialValue); //the value of the field is the initial value
+			strcpy(auxValue, initialValue); //the value of the field is the initial value
 		}
 		else if(strcmp(previousValue, "EMPTY") == 0){ //EMPTY
-			strcpy(aux, "EMPTY"); 
+			strcpy(auxValue, "EMPTY"); 
 		}
     }
-    strcpy(value, aux);
-    return value;
+    strcpy(value, auxValue);
 }
 
 float getFieldD(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, unsigned int operator){
