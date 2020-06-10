@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "t145toFIX.h"
+#include <stdlib.h>
+//#include "t145toFIX.h"
+#include "t145toFIXFile-OnixS.h"
+#include "t144toFIXFile-OnixS.h"
  
 FILE* openFile(char* fileName);
 void readMessage(FILE* file);
@@ -306,7 +309,7 @@ void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
 	__uint32_t MsgSeqNum = 0;
 	__uint64_t SendingTime = 0;
 
-	printf(" TemplateID: 144 || Template name=MDHeartbeat_144 \n");
+	//printf(" TemplateID: 144 || Template name=MDHeartbeat_144 \n");
 	for(int i = 0; i < FASTMessage_length; i++){
     	field[field_length] = FASTMessage[i];
     	field_length++;
@@ -329,8 +332,9 @@ void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
 			field_length = 0;
     	}
     }
-    printf(" MsgSeqNum: %d \n", MsgSeqNum);
-    printf(" SendingTime: %ld \n", SendingTime);
+    //printf(" MsgSeqNum: %d \n", MsgSeqNum);
+    //printf(" SendingTime: %ld \n", SendingTime);
+    t144toFIX(MsgSeqNum, SendingTime);
 }
 
 void templateDecoder(__uint16_t TemplateID, __uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length){
@@ -390,11 +394,15 @@ void readMessage(FILE* file){
 	int CurrentChunk = 0;
 	int MsgLength = 0;
 
-	//while(fread(&byte, 1, 1, file) > 0){
 	for(int i = 0; i < 1250; i++){ // number of messages //1250
+	//while(1){
 		for(int i = 0; i < 10; i++){ //read header
-			fread(&byte, 1, 1, file);
-			header[i] = byte;
+			if(fread(&byte, 1, 1, file) > 0){
+				header[i] = byte;
+			}
+			else{
+				exit(1);
+			}
 		}
 		MsgSeqNum = (header[0] << 24) | (header[1] << 16) | (header[2] << 8) | (header[3]); //concatenate the bytes
 		NoChunks = (header[4] << 8) | (header[5]);
@@ -409,12 +417,14 @@ void readMessage(FILE* file){
 			FASTMessage_length++;
 		}
 
-		if(MsgSeqNum > 731915){ //only to compare with the FIX log
+		//to compare with the onix log
+		/*if(MsgSeqNum > 731915){ //only to compare with the FIX log
 			printf("\n-----------------------------------------------------------------------------------------------------");
 			printf(" \n Message %d: \n", i+1);
 			printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n", MsgSeqNum, NoChunks, CurrentChunk, MsgLength);
 			identifyTemplate(FASTMessage, FASTMessage_length);
-		}
+		}*/
+		identifyTemplate(FASTMessage, FASTMessage_length);
 		FASTMessage_length = 0;
 
 		//printf(" ---------------------------------------------------------------------------\n\n");
@@ -588,7 +598,7 @@ void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap,
 
   	strcpy(previousValue, value);
 
-	if(PMap_order > 0){ //if the field there's a bit representation in bitmap
+	if(PMap_order > 0){ //if the field has a bit representation in bitmap
 		thereIsPMap = 1;
 		if((pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 1
 			PmapIs1 = 1;			
@@ -597,17 +607,17 @@ void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap,
 
 	if((thereIsPMap && PmapIs1) || !thereIsPMap){ //if the value is in the field (nullable or not)
 		__uint8_t* pt_streamValue = getField(streamField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length);
-		strcpy(streamValue, pt_streamValue);
+		strcpy(streamValue, pt_streamValue); //get the stream value
 	}
 	else{
-		*streamValue = 0x80; //absent
+		*streamValue = 0x80; //stream value is absent
 	}
 
-	strcpy(streamValue, bytetoStringDecoder(streamValue));
+	strcpy(streamValue, bytetoStringDecoder(streamValue)); //decode the stram value
 
-	stringOperator(auxValue, streamValue, previousValue, initialValue, operator, PmapIs1);
+	stringOperator(auxValue, streamValue, previousValue, initialValue, operator, PmapIs1); //apply operator
 
-	strcpy(value, auxValue);
+	strcpy(value, auxValue); //copy to the new value of the field
 
 }
 
@@ -616,7 +626,7 @@ void stringOperator(char* value, char* streamValue, char* previousValue, char* i
 	strcpy(auxValue, value);
 
 	if(operator == NONEOPERATOR || PMapIs1){
-		strcpy(auxValue, streamValue);
+		strcpy(auxValue, streamValue); //if there is no operator or PMap is 1, the new value is the stream value
 	}
     else if(operator == COPY && !PMapIs1){ //there is operator and is COPY
 		if(strcmp(previousValue, "UNDEFINED") != 0 && strcmp(previousValue, "EMPTY") != 0){ //assigned
@@ -629,7 +639,7 @@ void stringOperator(char* value, char* streamValue, char* previousValue, char* i
 			strcpy(auxValue, "EMPTY"); 
 		}
     }
-    strcpy(value, auxValue);
+    strcpy(value, auxValue); //copy the new value to the value
 }
 
 float getFieldD(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, __uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, unsigned int operator){
