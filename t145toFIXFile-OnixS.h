@@ -1,5 +1,11 @@
 #include <string.h>
 
+void printi(char* text, int var, char* buff){
+	char auxBuff[150];
+	sprintf(auxBuff, text, var);
+	strcat(buff, auxBuff);
+}
+
 void t145toFIX(
 	//Template
 	__uint32_t MsgSeqNum, __uint32_t TradeDate, __uint64_t SendintTime,
@@ -23,17 +29,16 @@ void t145toFIX(
 	FILE *file;
 	char buff[7000];
 	file = fopen("../validate-FASTEngineMD/logFIX51-FASTEngineMD.txt", "w");
-
 	strcpy(buff, "");
-	char intVar[64];
 
-	#define PRINTI(file, var) if(var > 0) printf(file, var) //print for int 
-	#define PRINT32I(file, var) if(var > 0){ printf(file, var); sprintf(intVar, "%d", var); strcat(strcat(buff, (file)), intVar);}
+	#define PRINTI(file, var) if(var != -80){printf(file, var); printi(file, var, buff);} //print for int 
 	#define PRINTD(file, var) if(var > 0.00) printf(file, var)	//print for decimals
 	#define PRINTS(file, var) if(strcmp(var, "EMPTY") != 0) printf(file, var)	//(different of NULL) print for strings
 
 	//printf("\n   ---------------------------------------------F-I-X---------------------------------------------\n");
 	//printf("\n");
+
+	//printi("34=%d|", MsgSeqNum, buff);
 
 	const char* ApplVerID = "7"; //"9";
 	const char* MsgType = "X";
@@ -47,7 +52,7 @@ void t145toFIX(
 	PRINTS("1128=%s|", ApplVerID);
 	printf("34=%d|", MsgSeqNum);
 	printf("52=%ld|", SendintTime);
-	PRINT32I("268=%d|", NoMDEntries); //turn back for printf //maybe to use another var like -1 to indicates null
+	printf("268=%d|", NoMDEntries); //turn back for printf //maybe to use another var like -1 to indicates null
 	if(NoMDEntries > 0){ //sequence
 		//printf(" MDEntriesSequence_PMap: %d \n", MDEntriesSequence_PMap);
 		printf("279=%d|", MDUpdateAction);
@@ -103,7 +108,7 @@ void t145toFIX(
 	printf("75=%d|", TradeDate);
 	printf("10=000|");
 
-	printf("\n buffer: %s \n", buff);
+	printf("\n\n buffer: %s \n\n", buff);
 
 	printf("\n");
 	//printf("\n-----------------------------------------------------------------------------------------------------\n\n");

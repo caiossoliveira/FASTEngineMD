@@ -20,7 +20,7 @@ void t145toFIX(
 	float UnderlyingPx
 ){
 
-	#define PRINTI(file, var) if(var > 0) printf(file, var)	//print for int 
+	#define PRINTI(file, var) if(var != -80) printf(file, var)	//print for int 
 	#define PRINTD(file, var) if(var > 0.00) printf(file, var)	//print for decimals
 	#define PRINTS(file, var) if(strcmp(var, "EMPTY") != 0) printf(file, var)	//(different of NULL) print for strings
 
@@ -35,30 +35,30 @@ void t145toFIX(
 	//template
 	PRINTS(" 1128=%s |", ApplVerID);
 	PRINTS(" 35=%s |", MsgType);
-	printf(" 34=%d |", MsgSeqNum);
-	printf(" 52=%ld |", SendintTime);
-	printf(" 75=%d |", TradeDate);
+	PRINTI(" 34=%d |", MsgSeqNum);
+	PRINTI(" 52=%ld |", SendintTime);
+	PRINTI(" 75=%d |", TradeDate);
 
 	//SequenceMDEntries
-	printf(" 268=%d |", NoMDEntries);
 	if(NoMDEntries > 0){ //sequence
+		PRINTI(" 268=%d |", NoMDEntries);
 		//printf(" MDEntriesSequence_PMap: %d \n", MDEntriesSequence_PMap);
-		printf(" 279=%d |", MDUpdateAction);
+		PRINTI(" 279=%d |", MDUpdateAction);
 		PRINTS(" 269=%s |", MDEntryType);
-		printf(" 22=%d |", SecurityIDSource);
+		PRINTI(" 22=%d |", SecurityIDSource);
 		PRINTS(" 207=%s |", SecurityExchange);
-		printf(" 48=%ld |", SecurityID);
-		printf(" 83=%d |", RptSeq);
+		PRINTI(" 48=%ld |", SecurityID);
+		PRINTI(" 83=%d |", RptSeq);
 		PRINTS(" 276=%s |", QuoteCondition);
 		PRINTD(" 270=%.2f |", MDEntryPx);
 		PRINTD(" 37014=%.2f |", MDEntryInterestRate);
 		PRINTI(" 346=%d |", NumberOfOrders);
 		PRINTS(" 423=%s |", PriceType);
-		printf(" 273=%d |", MDEntryTime);
-		printf(" 271=%ld |", MDEntrySize);
-		printf(" 272=%d |", MDEntryDate);
-		printf(" 37016=%d |", MDInsertDate);
-		printf(" 37017=%d |", MDInsertTime);
+		PRINTI(" 273=%d |", MDEntryTime);
+		PRINTI(" 271=%ld |", MDEntrySize);
+		PRINTI(" 272=%d |", MDEntryDate);
+		PRINTI(" 37016=%d |", MDInsertDate);
+		PRINTI(" 37017=%d |", MDInsertTime);
 		PRINTS(" 1500=%s |", MDStreamID);
 		PRINTS(" 15=%s |", Currency);
 		PRINTD(" 451=%.2f |", NetChgPrevDay);
@@ -72,7 +72,7 @@ void t145toFIX(
 		PRINTS(" 1003=%s |", TradeID);
 		PRINTS(" 288=%s |", MDEntryBuyer);
 		PRINTS(" 289=%s |", MDEntrySeller);
-		printf(" 290=%d |", MDEntryPositionNo);
+		PRINTI(" 290=%d |", MDEntryPositionNo);
 		PRINTI(" 731=%d |", SettPriceType);
 		PRINTI(" 9325=%d |", LastTradeDate);	
 		PRINTI(" 37013=%d |", PriceAdjustmentMethod);
@@ -88,8 +88,9 @@ void t145toFIX(
 		PRINTI(" 1140=%ld |", MaxTradeVol);
 
 		//SequenceUnderlyings
-		PRINTI(" 711=%d |", NoUnderlyings);
-		if(NoUnderlyings > 0){}
+		if(NoUnderlyings > 0){
+			PRINTI(" 711=%d |", NoUnderlyings);
+		}
 
 		PRINTI(" 37100=%ld", IndexSeq);
 	}
