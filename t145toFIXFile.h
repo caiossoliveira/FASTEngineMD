@@ -44,6 +44,9 @@ void t145toFIX(
 
 	char buff[7000];
 	strcpy(buff, "");
+	FILE *file;
+
+	file = fopen("../validate-FASTEngineMD/logFIX51-FASTEngineMD.txt", "a"); //writing in appending mode
 
 	char* ApplVerID = "9";
 	char* MsgType = "X";
@@ -112,6 +115,12 @@ void t145toFIX(
 
 		PRINTI("37100=%ld", IndexSeq);
 		printf("\n");
-		printf("\n buffer: %s \n", buff);
+		//printf("\n buffer: %s \n", buff);
 	}
+
+	//buff[strlen(buff)] = '\n';
+	strcat(buff, "\n");
+
+	fputs(buff, file);
+   	fclose(file);
 }

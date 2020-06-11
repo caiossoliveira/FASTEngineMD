@@ -936,6 +936,6 @@ __uint32_t fieldLength(__uint8_t* field){
 
 FILE* openFile(char* fileName) {
    static FILE* file;
-   file = fopen(fileName, "rb"); 
+   file = fopen(fileName, "rb"); //read binary
    return file;
 }
