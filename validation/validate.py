@@ -1,11 +1,14 @@
-fixlogb3 = open("fixtestlogb3.txt", "r") #open the file
-fixlogmine = open("fixtestlogmine.txt", "r")
+b3Log = "fixtestlogb3.txt"
+myLog = "fixtestlogmine2.txt"
+
+fixlogb3 = open(b3Log, "r") #open the file
+fixlogmine = open(myLog, "r")
 
 num_msgsB3 = sum(1 for line in fixlogb3) #number of messages in the log
 num_msgsMine = sum(1 for line in fixlogmine)
 
-fixlogb3 = open("fixtestlogb3.txt", "r")
-fixlogmine = open("fixtestlogmine.txt", "r")
+fixlogb3 = open(b3Log, "r")
+fixlogmine = open(myLog, "r")
 
 num_msgs = num_msgsB3 if num_msgsB3 > num_msgsMine else num_msgsMine #considerate the bigger file log
 noErrors = 0

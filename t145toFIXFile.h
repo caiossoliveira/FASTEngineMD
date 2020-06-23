@@ -71,7 +71,7 @@ void t145toFIX(
 		PRINTI("48=%ld|", SecurityID);
 		PRINTI("83=%d|", RptSeq);
 		PRINTS("276=%s|", QuoteCondition);
-		PRINTD("270=%.2f|", MDEntryPx);
+		PRINTD("270=%.4g|", MDEntryPx);
 		PRINTD("37014=%.2f|", MDEntryInterestRate);
 		PRINTI("346=%d|", NumberOfOrders);
 		PRINTS("423=%s|", PriceType);

@@ -724,8 +724,8 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 
     __uint8_t* ptrExp = NULL;
     __uint8_t* ptrMant = NULL;
-    float exp = 0.0;
-    double mant = 0.0;
+    int exp = 0;
+    long int mant = 0;
     float decimal = 0.0;
     int thereIsPMap = 0, PMapIs1 = 0;
 
@@ -738,10 +738,10 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 
 	if(thereIsPMap && PMapIs1){ //If set, the value appears in the stream in a nullable representation
 		ptrExp = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //there is a exp in the msg
+		exp = bytetoInt32Decoder(ptrExp) - 128; //decode the exp - bias of 127 from IEEE
 		if(*ptrExp != 0x80){ //if it is no zero
 			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //get the mantissa
-			exp = bytetoInt32Decoder(ptrExp); //decode the exp
-			mant = bytetoInt64Decoder(ptrMant); //decode the mant
+			mant = bytetoInt64Decoder(ptrMant); 
 		}
 	}
 	else{ //if the bit is 0, default exp = initialExp
