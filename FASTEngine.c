@@ -38,9 +38,10 @@ __uint64_t int64Operator(__uint64_t value, __uint64_t previousValue, __uint64_t 
 	int PMapis1);
 void stringOperator(char* value, char* streamValue, char* previousValue, char* initialValue, int operator, 
 	int PMapIs1);
-float decimalOperator(__int64_t valueExp, __int64_t previousValueExp, __int64_t initialValueExp, int operatorExp,
-	__int64_t valueMan, __int64_t previousValueMan, __int64_t initialValueMan, int operatorMan, 
-	int PMapis1);
+float decimalOperator(__int64_t valueExp, __int64_t previousValueExp, __int64_t initialValueExp,
+	__int64_t valueMan, __int64_t previousValueMan, __int64_t initialValueMan, 
+	int operatorEnt, int operatorExp, int operatorMan, 
+	int PMapIs1);
 
 char* bytetoStringDecoder(__uint8_t* field);
 float bytetoDecimalDecoder(__uint8_t* field);
@@ -50,6 +51,7 @@ __uint32_t bytetoPMapDecoder(__uint8_t* field, __int32_t field_length);
 __uint32_t fieldLength(__uint8_t* field);
 int pMapCheck(__uint32_t PMap, unsigned int PMap_length, __uint32_t noCurrentField);
 int isDecimal(unsigned int PMap_order);
+int isNegative(int val);
 
 void test();
  
@@ -737,8 +739,16 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 	}
 
 	if(thereIsPMap && PMapIs1){ //If set, the value appears in the stream in a nullable representation
+		//printf("\nThere is pmap and is 1: %d ", PMap_order);
 		ptrExp = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //there is a exp in the msg
-		exp = bytetoInt32Decoder(ptrExp) - 128; //decode the exp - bias of 127 from IEEE
+		exp = bytetoInt32Decoder(ptrExp); //decode the exp
+		if(isNegative(exp)){
+			exp-= 128; //2's complement
+		}
+		else{
+			exp-= 1; //nullable -1
+		}
+		//printf("\nExp: %d %d ", PMap_order, exp);
 		if(*ptrExp != 0x80){ //if it is no zero
 			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //get the mantissa
 			mant = bytetoInt64Decoder(ptrMant); 
@@ -752,12 +762,18 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 		}
 	}
 
-	decimal = decimalOperator(exp, 0.0, initialExp, 0, mant, 0.0, 0.0, 0, PMapIs1);
+	//decimal = decimalOperator(exp, 0.0, initialExp, 0, mant, 0.0, 0.0, 0, PMapIs1);
+	decimal = decimalOperator(exp, 0.0, initialExp, mant, 0, 0, 0, DEFAULT, DELTA, PMapIs1);
 }
 
-float decimalOperator(__int64_t valueExp, __int64_t previousValueExp, __int64_t initialValueExp, int operatorExp,
-	__int64_t valueMan, __int64_t previousValueMan, __int64_t initialValueMan, int operatorMan, 
+float decimalOperator(__int64_t valueExp, __int64_t previousValueExp, __int64_t initialValueExp,
+	__int64_t valueMan, __int64_t previousValueMan, __int64_t initialValueMan, 
+	int operatorEnt, int operatorExp, int operatorMan, 
 	int PMapIs1){
+
+	if(operatorEnt != NONEOPERATOR || (operatorExp == NONEOPERATOR && operatorMan == NONEOPERATOR)){
+		int scaledNumber = 1;
+	}
 
 	float decimal = pow(10, valueExp);
 	return valueMan * decimal;
@@ -859,6 +875,28 @@ int isDecimal(unsigned int PMap_order){
 		case TRADINGREFERENCEPRICE: return 1;
 		default : return 0;
 	}
+}
+
+int isNegative(int val){
+	int isNegative = 0;
+    
+    if(val < 0x10000){
+        if (val < 0x100){
+            if(val & 0b01000000){
+                isNegative = 1;
+            }
+        }
+        else{
+        } // 16 bit
+    }else{
+        if (val < 0x100000000L){
+        }
+        else{ // 64 bit
+            
+        }
+    }
+    
+    return isNegative;
 }
 
 float bytetoDecimalDecoder(__uint8_t* field){

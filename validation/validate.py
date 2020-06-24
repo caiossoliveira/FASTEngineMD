@@ -1,5 +1,5 @@
 b3Log = "fixtestlogb3.txt"
-myLog = "fixtestlogmine2.txt"
+myLog = "fixtestlogmine3.txt"
 
 fixlogb3 = open(b3Log, "r") #open the file
 fixlogmine = open(myLog, "r")
