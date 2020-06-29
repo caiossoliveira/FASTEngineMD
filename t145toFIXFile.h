@@ -61,7 +61,7 @@ void t145toFIX(
 	PRINTI("75=%d|", TradeDate);
 
 	//SequenceMDEntries
-	if(NoMDEntries>0){ //sequence
+	if(NoMDEntries > 0){ //sequence
 		PRINTI("268=%d|", NoMDEntries);
 		//printf(" MDEntriesSequence_PMap: %d \n", MDEntriesSequence_PMap);
 		PRINTI("279=%d|", MDUpdateAction);

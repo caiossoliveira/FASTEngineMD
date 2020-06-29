@@ -13,6 +13,8 @@ void templateDecoder(__uint16_t TemplateID, __uint32_t PMap,
 void templateDoNotIdentified(__uint16_t TemplateID);
 void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length);
 void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length);
+void MD145Handler(__uint32_t MDUpdateAction, char* MDEntryType, __uint32_t RptSeq, char* QuoteCondition, 
+	__uint64_t SecurityID, __uint32_t MDEntryTime, float MDEntryPx, __uint64_t MDEntrySize);
 
 __uint32_t getField32I(__uint8_t** FASTMessage, int FASTMessage_length, 
 	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order, 
@@ -55,9 +57,22 @@ int isNegative(int val);
 
 void test();
  
+__uint64_t globalSecurityID = 3809639;
+float book[10] = {9999.0, 9999.0, 9999.0, 9999.0, 9999.0, -9999.0, -9999.0, -9999.0, -9999.0, -9999.0};
+int levels = 1;
+
 int main () {
 	readMessage(openFile("51_Inc_FAST.bin"));
 	//test();
+
+	printf("\n --Book----------------------------------- \n");
+	printf("   SecurityID: %ld \n", globalSecurityID);
+	if(levels == 1){
+		printf("    -TOB--------------------------------\n");
+		printf("     Best offer: %.2f \n", book[0]);
+		printf("     Best bid: %.2f \n\n\n", book[5]);
+	}
+
     return 0;
 }
 
@@ -395,7 +410,9 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		/*printf(" IndexSeq: %ld \n", IndexSeq);*/
 	}
 
-	t145toFIX(
+	MD145Handler(MDUpdateAction, MDEntryType, RptSeq, QuoteCondition, SecurityID, MDEntryTime, MDEntryPx, MDEntrySize);
+
+	/*t145toFIX(
 		//Template
 		MsgSeqNum, TradeDate, SendintTime,
 		//SequenceMDEntries
@@ -408,7 +425,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		MDEntryPx, MDEntryInterestRate, NetChgPrevDay, LowLimitPrice, HighLimitPrice, TradingReferencePrice,
 		//SequenceUnderlyings
 		NoUnderlyings, UnderlyingPXType, UnderlyingSecurityID, IndexSeq, UnderlyingPx
-	);
+	);*/
 }
 
 void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
@@ -444,6 +461,23 @@ void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
     //printf(" MsgSeqNum: %d \n", MsgSeqNum);
     //printf(" SendingTime: %ld \n", SendingTime);
     //t144toFIX(MsgSeqNum, SendingTime);
+}
+
+void MD145Handler(__uint32_t MDUpdateAction, char* MDEntryType, __uint32_t RptSeq, char* QuoteCondition, 
+	__uint64_t SecurityID, __uint32_t MDEntryTime, float MDEntryPx, __uint64_t MDEntrySize){
+
+	if(SecurityID == globalSecurityID){
+		if(MDUpdateAction == 0){ //new
+			if(levels == 1){
+				if(*MDEntryType == '0'){ //bid
+					book[0] = MDEntryPx;
+				}
+				else if(*MDEntryType == '1'){ //offer
+					book[5] = MDEntryPx;
+				}
+			}
+		}
+	}
 }
 
 void templateDecoder(__uint16_t TemplateID, __uint32_t PMap, 
@@ -529,13 +563,13 @@ void readMessage(FILE* file){
 		}
 
 		//to compare with the onix log
-		/*if(MsgSeqNum > 731915){ //only to compare with the FIX log
-			printf("\n-----------------------------------------------------------------------------------------------------");
-			printf(" \n Message %d: \n", i+1);
-			printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n", MsgSeqNum, NoChunks, CurrentChunk, MsgLength);
+		if(MsgSeqNum > 732013 && MsgSeqNum < 732029){ //731915){ //only to compare with the FIX log
+			//printf("\n-----------------------------------------------------------------------------------------------------");
+			//printf(" \n Message %d: \n", i+1);
+			//printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n", MsgSeqNum, NoChunks, CurrentChunk, MsgLength);
 			identifyTemplate(FASTMessage, FASTMessage_length);
-		}*/
-		identifyTemplate(FASTMessage, FASTMessage_length);
+		}
+		//identifyTemplate(FASTMessage, FASTMessage_length);
 		FASTMessage_length = 0;
 
 		//printf(" ---------------------------------------------------------------------------\n\n");
@@ -811,7 +845,6 @@ void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length,
 	stringOperator(auxValue, streamValue, previousValue, initialValue, operator, PmapIs1); //apply operator
 
 	strcpy(value, auxValue); //copy to the new value of the field
-
 }
 
 void stringOperator(char* value, char* streamValue, char* previousValue, char* initialValue, 
