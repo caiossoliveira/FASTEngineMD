@@ -6,8 +6,6 @@ void prints(char* text, char* var, char* buff);
 void printvs(char* text, char (*var)[1000], char* buff);
 void printd(char* text, float var, char* buff);
 
-int i = 0;
-
 void t145toFIX(
 	//Template
 	__uint32_t MsgSeqNum, __uint32_t TradeDate, __uint64_t SendintTime,
@@ -50,12 +48,18 @@ void t145toFIX(
 	print64i("52=%ld|", SendintTime, buff);
 	print32i("75=%d|", TradeDate, buff);
 
+	/*printf("\n\n NoMDEntries: %d \n", NoMDEntries);
+	printf("  1: %s \n", MDEntryType[0]);
+	printf("  2: %s \n", MDEntryType[1]);
+	printf("  3: %s \n", MDEntryType[2]);
+	printf("  4: %s \n\n", MDEntryType[3]);*/
+
 	//SequenceMDEntries
 	if(NoMDEntries > 0){ //sequence
 		print32i("268=%d|", NoMDEntries, buff);
 		for(int i = 0; i < NoMDEntries; i++){
 			print32i("279=%d|", MDUpdateAction[i], buff);
-			printvs("269=%s|", MDEntryType + i, buff); //LOOK HERE
+			printvs("269=%s|", MDEntryType + i, buff);
 			print32i("22=%d|", SecurityIDSource, buff); //cte
 			prints("207=%s|", SecurityExchange, buff);
 			print64i("48=%ld|", SecurityID[i], buff);
@@ -137,7 +141,7 @@ void print32i(char* text, __int32_t var, char* buff){
 }
 
 void printvs(char* text, char (*var)[1000], char* buff){
-	if(strcmp(var[0], "EMPTY") != 0){
+	if(strcmp(var[0], "EMPTY") != 0 && var[0][0] != '\0'){
 		char auxBuff[150];
 		sprintf(auxBuff, text, var[0]);
 		strcat(buff, auxBuff);
@@ -146,7 +150,7 @@ void printvs(char* text, char (*var)[1000], char* buff){
 }
 
 void prints(char* text, char* var, char* buff){ 
-	if(strcmp(var, "EMPTY") != 0){
+	if(strcmp(var, "EMPTY") != 0 && *var != '\0'){
 		char auxBuff[150];
 		sprintf(auxBuff, text, var);
 		strcat(buff, auxBuff);
