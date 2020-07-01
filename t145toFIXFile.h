@@ -1,46 +1,36 @@
 #include <string.h>
 
-void printi(char* text, __int64_t var, char* buff){
-	char auxBuff[150];
-	sprintf(auxBuff, text, var);
-	strcat(buff, auxBuff);
-}
+void print64i(char* text, __int64_t var, char* buff);
+void print32i(char* text, __int32_t var, char* buff);
+void prints(char* text, char* var, char* buff);
+void printvs(char* text, char (*var)[1000], char* buff);
+void printd(char* text, float var, char* buff);
 
-void prints(char* text, char* var, char* buff){
-	char auxBuff[150];
-	sprintf(auxBuff, text, var);
-	strcat(buff, auxBuff);
-}
-
-void printd(char* text, float var, char* buff){
-	char auxBuff[150];
-	sprintf(auxBuff, text, var);
-	strcat(buff, auxBuff);
-}
+int i = 0;
 
 void t145toFIX(
 	//Template
 	__uint32_t MsgSeqNum, __uint32_t TradeDate, __uint64_t SendintTime,
 	//SequenceMDEntries
-	__uint32_t NoMDEntries, __uint32_t MDEntriesSequence_PMap, __uint32_t MDEntriesSequence_PMap_length, __uint32_t MDUpdateAction,
-	__uint32_t RptSeq, __uint32_t NumberOfOrders, __uint32_t MDEntryTime, __uint32_t MDEntryDate, __uint32_t MDInsertDate,
-	__uint32_t MDInsertTime, __uint32_t SellerDays, __uint32_t TradingSessionID, __uint32_t OpenCloseSettlFlag, 
-	__uint32_t MDEntryPositionNo, __uint32_t SettPriceType, __uint32_t LastTradeDate, __uint32_t PriceAdjustmentMethod,
-	__uint32_t PriceLimitType, __uint32_t PriceBandMidpointPriceType,
-	__uint64_t SecurityID, __uint64_t MDEntrySize, __uint64_t TradeVolume, __uint64_t AvgDailyTradedQty, 
-	__uint64_t ExpireDate, __uint64_t EarlyTermination, __uint64_t MaxTradeVol,
-	char* MDEntryType, char* QuoteCondition, char* PriceType, char* MDStreamID, char* Currency, char* TickDirection, 
-	char* TradeCondition, char* OrderID, char* TradeID, char* MDEntryBuyer, char* MDEntrySeller, char* PriceBandType, 
-	float MDEntryPx, float MDEntryInterestRate, float NetChgPrevDay, float LowLimitPrice, float HighLimitPrice, 
-	float TradingReferencePrice,
+	__uint32_t NoMDEntries, __uint32_t MDEntriesSequence_PMap, __uint32_t MDEntriesSequence_PMap_length, __uint32_t* MDUpdateAction,
+	__uint32_t* RptSeq, __uint32_t* NumberOfOrders, __uint32_t* MDEntryTime, __uint32_t* MDEntryDate, __uint32_t* MDInsertDate,
+	__uint32_t* MDInsertTime, __uint32_t* SellerDays, __uint32_t* TradingSessionID, __uint32_t* OpenCloseSettlFlag, 
+	__uint32_t* MDEntryPositionNo, __uint32_t* SettPriceType, __uint32_t* LastTradeDate, __uint32_t* PriceAdjustmentMethod,
+	__uint32_t* PriceLimitType, __uint32_t* PriceBandMidpointPriceType,
+	__uint64_t* SecurityID, __uint64_t* MDEntrySize, __uint64_t* TradeVolume, __uint64_t* AvgDailyTradedQty, 
+	__uint64_t* ExpireDate, __uint64_t* EarlyTermination, __uint64_t* MaxTradeVol,
+	char (*MDEntryType)[1000], char (*QuoteCondition)[1000], char (*PriceType)[1000], char (*MDStreamID)[1000], char (*Currency)[1000], 
+	char (*TickDirection)[1000], char (*TradeCondition)[1000], char (*OrderID)[1000], char (*TradeID)[1000],
+	char (*MDEntryBuyer)[1000], char (*MDEntrySeller)[1000], char (*PriceBandType)[1000], 
+	float* MDEntryPx, float* MDEntryInterestRate, float* NetChgPrevDay, float* LowLimitPrice, float* HighLimitPrice, 
+	float* TradingReferencePrice,
 	//SequenceUnderlyings
-	__uint32_t NoUnderlyings, __uint32_t UnderlyingPXType, __uint64_t UnderlyingSecurityID, __uint64_t IndexSeq,
+	__uint32_t NoUnderlyings, __uint32_t UnderlyingPXType, __uint64_t UnderlyingSecurityID, __uint64_t* IndexSeq,
 	float UnderlyingPx
 ){
-
-	#define PRINTI(file, var) if(var != -80){ printf(file, var); printi(file, var, buff);}	//print for int 
-	#define PRINTD(file, var) if(var > 0.00){ printf(file, var); printd(file, var, buff);}	//print for decimals
-	#define PRINTS(file, var) if(strcmp(var, "EMPTY") != 0){ printf(file, var); prints(file, var, buff);}	//(different of NULL) print for strings
+	#define PRINTI(file, var) { printf(file, var); }//if(var != -80) printi(file, var, buff);}	//print for int 
+	#define PRINTD(file, var) { printf(file, var); }//if(var > 0.00) printd(file, var, buff);}	//print for decimals
+	#define PRINTS(file, var) { printf(file, var); }//if(strcmp(var, "EMPTY") != 0); prints(file, var, buff);}	//(different of NULL) print for strings
 
 	char buff[7000];
 	strcpy(buff, "");
@@ -54,73 +44,121 @@ void t145toFIX(
 	char* SecurityExchange = "BVMF";
 
 	//template
-	PRINTS("1128=%s|", ApplVerID);
-	PRINTS("35=%s|", MsgType);
-	PRINTI("34=%d|", MsgSeqNum);
-	PRINTI("52=%ld|", SendintTime);
-	PRINTI("75=%d|", TradeDate);
+	prints("1128=%s|", ApplVerID, buff);
+	prints("35=%s|", MsgType, buff);
+	print32i("34=%d|", MsgSeqNum, buff);
+	print64i("52=%ld|", SendintTime, buff);
+	print32i("75=%d|", TradeDate, buff);
 
 	//SequenceMDEntries
 	if(NoMDEntries > 0){ //sequence
-		PRINTI("268=%d|", NoMDEntries);
-		//printf(" MDEntriesSequence_PMap: %d \n", MDEntriesSequence_PMap);
-		PRINTI("279=%d|", MDUpdateAction);
-		PRINTS("269=%s|", MDEntryType);
-		PRINTI("22=%d|", SecurityIDSource);
-		PRINTS("207=%s|", SecurityExchange);
-		PRINTI("48=%ld|", SecurityID);
-		PRINTI("83=%d|", RptSeq);
-		PRINTS("276=%s|", QuoteCondition);
-		PRINTD("270=%.4g|", MDEntryPx);
-		PRINTD("37014=%.2f|", MDEntryInterestRate);
-		PRINTI("346=%d|", NumberOfOrders);
-		PRINTS("423=%s|", PriceType);
-		PRINTI("273=%d|", MDEntryTime);
-		PRINTI("271=%ld|", MDEntrySize);
-		PRINTI("272=%d|", MDEntryDate);
-		PRINTI("37016=%d|", MDInsertDate);
-		PRINTI("37017=%d|", MDInsertTime);
-		PRINTS("1500=%s|", MDStreamID);
-		PRINTS("15=%s|", Currency);
-		PRINTD("451=%.2f|", NetChgPrevDay);
-		PRINTI("287=%d|", SellerDays);
-		PRINTI("1020=%ld|", TradeVolume);
-		PRINTS("274=%s|", TickDirection);
-		PRINTS("277=%s|", TradeCondition);
-		PRINTI("336=%d|", TradingSessionID);
-		PRINTI("286=%d|", OpenCloseSettlFlag);
-		PRINTS("37=%s|", OrderID);
-		PRINTS("1003=%s|", TradeID);
-		PRINTS("288=%s|", MDEntryBuyer);
-		PRINTS("289=%s|", MDEntrySeller);
-		PRINTI("290=%d|", MDEntryPositionNo);
-		PRINTI("731=%d|", SettPriceType);
-		PRINTI("9325=%d|", LastTradeDate);	
-		PRINTI("37013=%d|", PriceAdjustmentMethod);
-		PRINTS("6939=%s|", PriceBandType);
-		PRINTI("1306=%d|", PriceLimitType);
-		PRINTD("1148=%.2f|", LowLimitPrice);
-		PRINTD("1149=%.2f|", HighLimitPrice);
-		PRINTD("1150=%.2f|", TradingReferencePrice);
-		PRINTI("37008=%d|", PriceBandMidpointPriceType);
-		PRINTI("37003=%ld|", AvgDailyTradedQty);
-		PRINTI("432=%ld|", ExpireDate);
-		PRINTI("37019=%ld|", EarlyTermination);
-		PRINTI("1140=%ld|", MaxTradeVol);
+		print32i("268=%d|", NoMDEntries, buff);
+		for(int i = 0; i < NoMDEntries; i++){
+			print32i("279=%d|", MDUpdateAction[i], buff);
+			printvs("269=%s|", MDEntryType + i, buff); //LOOK HERE
+			print32i("22=%d|", SecurityIDSource, buff); //cte
+			prints("207=%s|", SecurityExchange, buff);
+			print64i("48=%ld|", SecurityID[i], buff);
+			print32i("83=%d|", RptSeq[i], buff);
+			printvs("276=%s|", QuoteCondition + i, buff);
+			printd("270=%.4g|", MDEntryPx[i], buff);
+			printd("37014=%.2f|", MDEntryInterestRate[i], buff);
+			print32i("346=%d|", NumberOfOrders[i], buff);
+			printvs("423=%s|", PriceType + i, buff);
+			print32i("273=%d|", MDEntryTime[i], buff);
+			print64i("271=%ld|", MDEntrySize[i], buff);
+			print32i("272=%d|", MDEntryDate[i], buff);
+			print32i("37016=%d|", MDInsertDate[i], buff);
+			print32i("37017=%d|", MDInsertTime[i], buff);
+			printvs("1500=%s|", MDStreamID + i, buff);
+			printvs("15=%s|", Currency + i, buff);
+			printd("451=%.2f|", NetChgPrevDay[i], buff);
+			print32i("287=%d|", SellerDays[i], buff);
+			print64i("1020=%ld|", TradeVolume[i], buff);
+			printvs("274=%s|", TickDirection + i, buff);
+			printvs("277=%s|", TradeCondition + i, buff);
+			print32i("336=%d|", TradingSessionID[i], buff);
+			print32i("286=%d|", OpenCloseSettlFlag[i], buff);
+			printvs("37=%s|", OrderID + i, buff);
+			printvs("1003=%s|", TradeID + i, buff);
+			printvs("288=%s|", MDEntryBuyer + i, buff);
+			printvs("289=%s|", MDEntrySeller + i, buff);
+			print32i("290=%d|", MDEntryPositionNo[i], buff);
+			print32i("731=%d|", SettPriceType[i], buff);
+			print32i("9325=%d|", LastTradeDate[i], buff);	
+			print32i("37013=%d|", PriceAdjustmentMethod[i], buff);
+			printvs("6939=%s|", PriceBandType + i, buff);
+			print32i("1306=%d|", PriceLimitType[i], buff);
+			printd("1148=%.2f|", LowLimitPrice[i], buff);
+			printd("1149=%.2f|", HighLimitPrice[i], buff);
+			printd("1150=%.2f|", TradingReferencePrice[i], buff);
+			print32i("37008=%d|", PriceBandMidpointPriceType[i], buff);
+			print64i("37003=%ld|", AvgDailyTradedQty[i], buff);
+			print64i("432=%ld|", ExpireDate[i], buff);
+			print64i("37019=%ld|", EarlyTermination[i], buff);
+			print64i("1140=%ld|", MaxTradeVol[i], buff);
 
-		//SequenceUnderlyings
-		if(NoUnderlyings > 0){
-			PRINTI("711=%d|", NoUnderlyings);
+			//SequenceUnderlyings
+			if(NoUnderlyings > 0){
+				print32i("711=%d|", NoUnderlyings, buff);
+			}
+
+			print64i("37100=%ld", IndexSeq[i], buff);
+			//printf("\n");
+			//printf("\n buffer: %s \n", buff);
 		}
-
-		PRINTI("37100=%ld", IndexSeq);
-		printf("\n");
-		//printf("\n buffer: %s \n", buff);
 	}
+
+	printf("\n");
 
 	//buff[strlen(buff)] = '\n';
 	strcat(buff, "\n");
 
 	fputs(buff, file);
-   	fclose(file);
+	fclose(file);
+}
+
+void print64i(char* text, __int64_t var, char* buff){
+	if(var != -80){
+		char auxBuff[150];
+		sprintf(auxBuff, text, var);
+		strcat(buff, auxBuff);
+		PRINTI(text, var);
+	}
+}
+
+void print32i(char* text, __int32_t var, char* buff){
+	if(var != -80){
+		char auxBuff[150];
+		sprintf(auxBuff, text, var);
+		strcat(buff, auxBuff);
+		PRINTI(text, var);
+	}
+}
+
+void printvs(char* text, char (*var)[1000], char* buff){
+	if(strcmp(var[0], "EMPTY") != 0){
+		char auxBuff[150];
+		sprintf(auxBuff, text, var[0]);
+		strcat(buff, auxBuff);
+		PRINTS(text, var);
+	}
+}
+
+void prints(char* text, char* var, char* buff){ 
+	if(strcmp(var, "EMPTY") != 0){
+		char auxBuff[150];
+		sprintf(auxBuff, text, var);
+		strcat(buff, auxBuff);
+		PRINTS(text, var);
+	}
+}
+
+void printd(char* text, float var, char* buff){
+	if(var > 0.00){
+		char auxBuff[150];
+		sprintf(auxBuff, text, var);
+		strcat(buff, auxBuff);
+		PRINTD(text, var);
+	}
 }
