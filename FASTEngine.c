@@ -35,7 +35,7 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 	float previousValue, unsigned int operator, __int32_t initialExp);
 
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length);
+	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order);
 
 __uint32_t int32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t initialValue, int operator, 
 	int PMapis1);
@@ -173,30 +173,41 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 		NONEBITMAP, SendintTime, NONEOPERATOR, initialValueI, NON_NULLABLE);
 
 	TradeDate = getField32I(&ptr_FASTMessage, FASTMessage_length, 
-		NONEBITMAP, NONEBITMAP, NONEBITMAP,
-		TradeDate, NONEOPERATOR, initialValueI, NULLABLE);
+		NONEBITMAP, NONEBITMAP, NONEBITMAP, 
+		TradeDate, NONEOPERATOR, initialValueI, NULLABLE); 
 
 	NoMDEntries = getField32I(&ptr_FASTMessage, FASTMessage_length, 
 		NONEBITMAP, NONEBITMAP, NONEBITMAP, 
 		NoMDEntries, NONEOPERATOR, initialValueI, NON_NULLABLE);
 
-
 	if(NoMDEntries > 0){ //sequence
 		for(int i = 0; i < NoMDEntries; i++){
 			__uint8_t* aux = getField(field, &ptr_FASTMessage, FASTMessage_length,	
 				NONEBITMAP, NONEBITMAP, NONEBITMAP);
-			MDEntriesSequence_PMap = bytetoInt32Decoder(aux);
+			
 			MDEntriesSequence_PMap_length = fieldLength(aux);
-
-			printf("\n ");
-			for(int i = 0; i < MDEntriesSequence_PMap_length; i++){
+			MDEntriesSequence_PMap = bytetoInt32Decoder(aux); 
+ 
+			printf("\n Length: %d \n ", MDEntriesSequence_PMap_length);
+			printf("%d: ", MDEntriesSequence_PMap);
+			for(int k = 0; k < MDEntriesSequence_PMap_length; k++){
 				printf("%02x ", (unsigned int) *aux++);
 			}
 			printf("\n ");
-			for(int i = 0; i < MDEntriesSequence_PMap_length * 8; i++){
-				printf("%d", pMapCheck(MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, i+1));
+
+			printf("\n ===== Begin %d ===== \n", i);
+
+			for(int j = 0; j < MDEntriesSequence_PMap_length * 8; j++){
+				pMapCheck(MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, j+1);
 			}
-			printf("\n");
+
+			printf("\n ===== End %d ===== \n", i);
+			printf(" Test: %d \n", MDEntriesSequence_PMap_length);
+		
+			/*for(int j = 0; j < MDEntriesSequence_PMap_length * 8; j++){
+				printf("%d", pMapCheck(MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, j+1));
+			}
+			printf("\n");*/
 
 			MDUpdateAction[i] = getField32I(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDUPDATEACTION,
@@ -206,7 +217,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYTYPE,
 				MDEntryType[i], COPY, "0");
 
-			printf("\n MDEntryType[%d]: %s \n", i, MDEntryType[i]);
+			//printf("\n MDEntryType[%d]: %s \n", i, MDEntryType[i]);
 
 			SecurityID[i] = getField64I(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, SECURITYID,
@@ -547,7 +558,7 @@ void templateDoNotIdentified(__uint16_t TemplateID){
 }
 
 __uint32_t getField32I(__uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length,
+	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order,
 	__uint32_t previousValue, unsigned int operator, __uint32_t initialValue, unsigned int isNullable){
 
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
@@ -563,7 +574,7 @@ __uint32_t getField32I(__uint8_t** FASTMessage, int FASTMessage_length,
 	}
 
 	if((thereIsPMap && PmapIs1) || !thereIsPMap){ //if the value is in the stream (nullable or not)
-		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length);
+		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order);
 		value = bytetoInt32Decoder(pt_value);
 	}
 	else{
@@ -634,7 +645,7 @@ __uint32_t int32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t 
 }
 
 __uint64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length,
+	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order,
 	__uint64_t previousValue, unsigned int operator, __uint64_t initialValue, unsigned int isNullable){
 
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
@@ -650,7 +661,7 @@ __uint64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length,
 	}
 
 	if((thereIsPMap && PmapIs1) || !thereIsPMap){ //if the value is in the stream (nullable or not)
-		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length);
+		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order);
 		value = bytetoInt64Decoder(pt_value);
 	}
 	else{
@@ -740,7 +751,7 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 
 	if(thereIsPMap && PMapIs1){ //If set, the value appears in the stream in a nullable representation
 		//printf("\nThere is pmap and is 1: %d ", PMap_order);
-		ptrExp = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //there is a exp in the msg
+		ptrExp = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order); //there is a exp in the msg
 		exp = bytetoInt32Decoder(ptrExp); //decode the exp
 		if(isNegative(exp)){
 			exp-= 128; //2's complement
@@ -750,14 +761,14 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 		}
 		//printf("\nExp: %d %d ", PMap_order, exp);
 		if(*ptrExp != 0x80){ //if it is no zero
-			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //get the mantissa
+			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order); //get the mantissa
 			mant = bytetoInt64Decoder(ptrMant); 
 		}
 	}
 	else{ //if the bit is 0, default exp = initialExp
 		if(initialExp != 0){ 
 			exp = initialExp; //so there is no exp, then is no exp in the msg, so the default is -2
-			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length); //get the mantissa
+			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order); //get the mantissa
 			mant = bytetoInt64Decoder(ptrMant); //decode the mantissa
 		}
 	}
@@ -803,7 +814,7 @@ void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length,
 	}
 
 	if((thereIsPMap && PmapIs1) || !thereIsPMap){ //if the value is in the field (nullable or not)
-		__uint8_t* pt_streamValue = getField(streamField, FASTMessage, FASTMessage_length, PMap, PMap_order, PMap_length);
+		__uint8_t* pt_streamValue = getField(streamField, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order);
 		strcpy(streamValue, pt_streamValue); //get the stream value
 	}
 	else{
@@ -841,7 +852,7 @@ void stringOperator(char* value, char* streamValue, char* previousValue, char* i
 }
 
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length){
+	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order){
 
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
     int field_length = 0;
@@ -1024,7 +1035,21 @@ char* bytetoStringDecoder(__uint8_t* field){
 int pMapCheck(__uint32_t PMap, unsigned int PMap_length, __uint32_t noCurrentField){
 	__uint32_t aux_bitMap = 0b00000000000000000000000000000001;
 
-	if(PMap & (aux_bitMap << (32 - PMap_length - noCurrentField))){ //if bitsmap's bit is 1
+	//printf("\n PMap_length: %d\n ", PMap_length);
+
+	if((PMap & (aux_bitMap << ((32) - PMap_length - noCurrentField))) != (PMap & (aux_bitMap << ((PMap_length * 8) - PMap_length - noCurrentField)))){
+		printf("\n Wrong: ");
+		printf("\n PMap: %d ", PMap);
+		printf("\n PMap_Length: %d ", PMap_length);
+		printf("\n noCurrentField: %d \n", noCurrentField);
+	}else{
+		printf("\n Right: ");
+		printf("\n PMap: %d ", PMap);
+		printf("\n PMap_Length: %d ", PMap_length);
+		printf("\n noCurrentField: %d \n", noCurrentField);
+	}
+
+	if(PMap & (aux_bitMap << ((32) - PMap_length - noCurrentField))){ //if bitsmap's bit is 1
 		return 1;
 	}
 	else{
