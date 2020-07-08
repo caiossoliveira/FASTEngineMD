@@ -187,27 +187,6 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 			
 			MDEntriesSequence_PMap_length = fieldLength(aux);
 			MDEntriesSequence_PMap = bytetoInt32Decoder(aux); 
- 
-			printf("\n Length: %d \n ", MDEntriesSequence_PMap_length);
-			printf("%d: ", MDEntriesSequence_PMap);
-			for(int k = 0; k < MDEntriesSequence_PMap_length; k++){
-				printf("%02x ", (unsigned int) *aux++);
-			}
-			printf("\n ");
-
-			printf("\n ===== Begin %d ===== \n", i);
-
-			for(int j = 0; j < MDEntriesSequence_PMap_length * 8; j++){
-				pMapCheck(MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, j+1);
-			}
-
-			printf("\n ===== End %d ===== \n", i);
-			printf(" Test: %d \n", MDEntriesSequence_PMap_length);
-		
-			/*for(int j = 0; j < MDEntriesSequence_PMap_length * 8; j++){
-				printf("%d", pMapCheck(MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, j+1));
-			}
-			printf("\n");*/
 
 			MDUpdateAction[i] = getField32I(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDUPDATEACTION,
@@ -216,8 +195,6 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 			getFieldS(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYTYPE,
 				MDEntryType[i], COPY, "0");
-
-			//printf("\n MDEntryType[%d]: %s \n", i, MDEntryType[i]);
 
 			SecurityID[i] = getField64I(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, SECURITYID,
@@ -541,7 +518,7 @@ void readMessage(FILE* file){
 
 		//to compare with the onix log
 		if(MsgSeqNum > 731952 && MsgSeqNum < 732034){ //731915){ //only to compare with the FIX log
-			printf("\n-----------------------------------------------------------------------------------------------------");
+			printf("\n-----------------------------------------------------------------------------------------------------\n");
 			//printf(" \n Message %d: \n", i+1);
 			//printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n", MsgSeqNum, NoChunks, CurrentChunk, MsgLength);
 			identifyTemplate(FASTMessage, FASTMessage_length);
@@ -1037,7 +1014,7 @@ int pMapCheck(__uint32_t PMap, unsigned int PMap_length, __uint32_t noCurrentFie
 
 	//printf("\n PMap_length: %d\n ", PMap_length);
 
-	if((PMap & (aux_bitMap << ((32) - PMap_length - noCurrentField))) != (PMap & (aux_bitMap << ((PMap_length * 8) - PMap_length - noCurrentField)))){
+	/*if((PMap & (aux_bitMap << ((32) - PMap_length - noCurrentField))) != (PMap & (aux_bitMap << ((PMap_length * 8) - PMap_length - noCurrentField)))){
 		printf("\n Wrong: ");
 		printf("\n PMap: %d ", PMap);
 		printf("\n PMap_Length: %d ", PMap_length);
@@ -1047,9 +1024,9 @@ int pMapCheck(__uint32_t PMap, unsigned int PMap_length, __uint32_t noCurrentFie
 		printf("\n PMap: %d ", PMap);
 		printf("\n PMap_Length: %d ", PMap_length);
 		printf("\n noCurrentField: %d \n", noCurrentField);
-	}
+	}*/
 
-	if(PMap & (aux_bitMap << ((32) - PMap_length - noCurrentField))){ //if bitsmap's bit is 1
+	if(PMap & (aux_bitMap << ((PMap_length * 8) - PMap_length - noCurrentField))){ //if bitsmap's bit is 1
 		return 1;
 	}
 	else{
