@@ -32,7 +32,8 @@ void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length,
 
 float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length, 
 	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order,
-	float previousValue, unsigned int operator, __int32_t initialExp);
+	float previousValue, unsigned int operator, 
+	unsigned int expOperator, unsigned int mantOperator, __int32_t initialExp);
 
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, 
 	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order);
@@ -43,7 +44,7 @@ __uint64_t int64Operator(__uint64_t value, __uint64_t previousValue, __uint64_t 
 	int PMapis1);
 void stringOperator(char* value, char* streamValue, char* previousValue, char* initialValue, int operator, 
 	int PMapIs1);
-float decimalOperator(__int64_t valueExp, __int64_t previousValueExp, __int64_t initialValueExp,
+float decimalOperator(float previousValue, __int64_t valueExp, __int64_t previousValueExp, __int64_t initialValueExp,
 	__int64_t valueMan, __int64_t previousValueMan, __int64_t initialValueMan, 
 	int operatorEnt, int operatorExp, int operatorMan, 
 	int PMapIs1);
@@ -186,39 +187,43 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 				NONEBITMAP, NONEBITMAP, NONEBITMAP);
 			
 			MDEntriesSequence_PMap_length = fieldLength(aux);
-			MDEntriesSequence_PMap = bytetoInt32Decoder(aux); 
+			MDEntriesSequence_PMap = bytetoInt32Decoder(aux);
 
 			MDUpdateAction[i] = getField32I(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDUPDATEACTION,
-				MDUpdateAction[i], COPY, 1, NON_NULLABLE);
+				MDUpdateAction[i != 0 ? i-1 : i], COPY, 1, NON_NULLABLE);
 
 			getFieldS(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYTYPE,
-				MDEntryType[i], COPY, "0");
+				MDEntryType[i != 0 ? i-1 : i], COPY, "0");
+
+			//printf("\n MDEntryType: %s \n", MDEntryType[i]);
 
 			SecurityID[i] = getField64I(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, SECURITYID,
-				SecurityID[i], COPY, NON_NULLABLE, initialValueI);
+				SecurityID[i != 0 ? i-1 : i], COPY, NON_NULLABLE, initialValueI);		 //decrement if i != 0
 
 			RptSeq[i] = getField32I(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, RPTSEQ, 
-				RptSeq[i], INCREMENT, NON_NULLABLE, initialValueI);
+				RptSeq[i != 0 ? i-1 : i], INCREMENT, NON_NULLABLE, initialValueI);
 
 			getFieldS(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, QUOTECONDITION,  
-				QuoteCondition[i], NONEOPERATOR, initialValueC);
+				QuoteCondition[i != 0 ? i-1 : i], NONEOPERATOR, initialValueC);
 
 			MDEntryPx[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYPX, 
-				MDEntryPx[i], NONEOPERATOR, -2);
+				MDEntryPx[i != 0 ? i-1 : i], NONEOPERATOR, 
+				DEFAULT, DELTA, -2);
 			
 			MDEntryInterestRate[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length,
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYINTERESTRATE,
-				MDEntryInterestRate[i], NONEOPERATOR, -2);
+				MDEntryInterestRate[i != 0 ? i-1 : i], NONEOPERATOR, 
+				DEFAULT, DELTA, -2);
 			
 			NumberOfOrders[i] = getField32I(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, NUMBEROFORDERS,
-				NumberOfOrders[i], NONEOPERATOR, initialValueI, NULLABLE);
+				NumberOfOrders[i != 0 ? i-1 : i], NONEOPERATOR, initialValueI, NULLABLE);
 			
 			getFieldS(&ptr_FASTMessage, FASTMessage_length, 
 				NONEBITMAP, NONEBITMAP, NONEBITMAP, 
@@ -226,15 +231,15 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 
 			MDEntryTime[i] = getField32I(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYTIME,  
-				MDEntryTime[i], COPY, initialValueI, NON_NULLABLE);
+				MDEntryTime[i != 0 ? i-1 : i], COPY, initialValueI, NON_NULLABLE);
 
 			MDEntrySize[i] = getField64I(&ptr_FASTMessage, FASTMessage_length, 
 				NONEBITMAP, NONEBITMAP, NONEBITMAP,
-				MDEntrySize[i], DELTA, initialValueI, NULLABLE);
+				MDEntrySize[i != 0 ? i-1 : i], DELTA, initialValueI, NULLABLE);
 
 			MDEntryDate[i] = getField32I(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYDATE,  
-				MDEntryDate[i], COPY, initialValueI, NULLABLE);
+				MDEntryDate[i != 0 ? i-1 : i], COPY, initialValueI, NULLABLE);
 
 			MDInsertDate[i] = getField32I(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDINSERTDATE, 
@@ -254,7 +259,8 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 			
 			NetChgPrevDay[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, NETCHGPREVDAY, 
-				NetChgPrevDay[i], NONEOPERATOR, 0);
+				NetChgPrevDay[i], NONEOPERATOR, 
+				DEFAULT, DELTA, 0);
 			
 			SellerDays[i] = getField32I(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, SELLERDAYS, 
@@ -322,15 +328,18 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 			
 			LowLimitPrice[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, LOWLIMITPRICE,  
-				LowLimitPrice[i], NONEOPERATOR, 0);
+				LowLimitPrice[i], NONEOPERATOR, 
+				DEFAULT, DELTA, 0);
 			
 			HighLimitPrice[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, HIGHLIMITPRICE, 
-				HighLimitPrice[i], NONEOPERATOR, 0);
+				HighLimitPrice[i], NONEOPERATOR, 
+				DEFAULT, DELTA, 0);
 
 			TradingReferencePrice[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, TRADINGREFERENCEPRICE, 
-				TradingReferencePrice[i], NONEOPERATOR, 0);
+				TradingReferencePrice[i], NONEOPERATOR, 
+				DEFAULT, DELTA, 0);
 			
 			PriceBandMidpointPriceType[i] = getField32I(&ptr_FASTMessage, FASTMessage_length, 
 				NONEBITMAP, NONEBITMAP, NONEBITMAP,  
@@ -587,7 +596,7 @@ __uint32_t int32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t 
     }
     else if(operator == INCREMENT && !PMapIs1){
 		if(previousValue != UNDEFINED && previousValue != 0){ //assigned
-			value++; //the value of the field is the previous value +1
+			value = previousValue + 1; //the value of the field is the previous value +1
 		}
 		else if(previousValue == UNDEFINED){ //undefined 
 			value = initialValue; //the value of the field is the initial value
@@ -689,6 +698,10 @@ __uint64_t int64Operator(__uint64_t value, __uint64_t previousValue, __uint64_t 
     	delta = value; //a delta value is present in the stream
 		if(previousValue != UNDEFINED && previousValue != 0){ //assigned
 			base = previousValue;
+			if(isNegative(delta)){ //is negative  /*need to creat a intDecoderFunction*/
+				delta-= 128; //2's complement
+				delta+=1; //it's nullable
+			}
 		}
 		else if(previousValue == UNDEFINED){ //undefined 
 			base = initialValue; //the value of the field is the initial value
@@ -707,7 +720,8 @@ __uint64_t int64Operator(__uint64_t value, __uint64_t previousValue, __uint64_t 
 
 float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length, 
 	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order,
-	float previousValue, unsigned int operator, __int32_t initialExp){
+	float previousValue, unsigned int operator, 
+	unsigned int expOperator, unsigned int mantOperator, __int32_t initialExp){
 
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
     __uint8_t streamValue[7000];
@@ -729,41 +743,65 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 	if(thereIsPMap && PMapIs1){ //If set, the value appears in the stream in a nullable representation
 		//printf("\nThere is pmap and is 1: %d ", PMap_order);
 		ptrExp = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order); //there is a exp in the msg
-		exp = bytetoInt32Decoder(ptrExp); //decode the exp
-		if(isNegative(exp)){
-			exp-= 128; //2's complement
-		}
-		else{
-			exp-= 1; //nullable -1
-		}
-		//printf("\nExp: %d %d ", PMap_order, exp);
 		if(*ptrExp != 0x80){ //if it is no zero
+			exp = bytetoInt32Decoder(ptrExp); //decode the exp
+			if(isNegative(exp)){
+				exp-= 128; //2's complement
+			}
+			else{
+				exp-= 1; //nullable -1
+			}
+			//printf("\nExp: %d %d ", PMap_order, exp);
 			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order); //get the mantissa
 			mant = bytetoInt64Decoder(ptrMant); 
 		}
 	}
 	else{ //if the bit is 0, default exp = initialExp
+		exp = -80;
 		if(initialExp != 0){ 
-			exp = initialExp; //so there is no exp, then is no exp in the msg, so the default is -2
+			//exp = initialExp; //change to the operator function // so there is no exp, then is no exp in the msg, so the default is -2
 			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order); //get the mantissa
 			mant = bytetoInt64Decoder(ptrMant); //decode the mantissa
 		}
 	}
 
 	//decimal = decimalOperator(exp, 0.0, initialExp, 0, mant, 0.0, 0.0, 0, PMapIs1);
-	decimal = decimalOperator(exp, 0.0, initialExp, mant, 0, 0, 0, DEFAULT, DELTA, PMapIs1);
+
+	decimal = decimalOperator(previousValue, exp, 0.0, initialExp, mant, 0, 0, 0, DEFAULT, DELTA, PMapIs1);
+
+	return decimal;
 }
 
-float decimalOperator(__int64_t valueExp, __int64_t previousValueExp, __int64_t initialValueExp,
+float decimalOperator(float previousValue, __int64_t valueExp, __int64_t previousValueExp, __int64_t initialValueExp,
 	__int64_t valueMan, __int64_t previousValueMan, __int64_t initialValueMan, 
 	int operatorEnt, int operatorExp, int operatorMan, 
 	int PMapIs1){
+
+	__int64_t delta = 0, base = 0;
 
 	if(operatorEnt != NONEOPERATOR || (operatorExp == NONEOPERATOR && operatorMan == NONEOPERATOR)){
 		int scaledNumber = 1;
 	}
 
+	if(operatorExp == DEFAULT && valueExp == -80){ //null
+		valueExp = initialValueExp;
+	}
+
+	if(operatorMan == DELTA && !PMapIs1){ /*need to improve all these functions*/
+		if(previousValue != UNDEFINED && previousValue != 0){ //assigned
+			base = pow(10, valueExp * -1); //recaucalculate de mantissa
+			valueMan = (previousValue * base);
+			float decimal = pow(10, valueExp);
+		}
+	}
+
+	if(valueExp == 0){
+		
+
+	}
+		
 	float decimal = pow(10, valueExp);
+	
 	return valueMan * decimal;
 }
 
