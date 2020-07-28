@@ -34,7 +34,8 @@ void t145toFIX(
 	strcpy(buff, "");
 	FILE *file;
 
-	file = fopen("../validate-FASTEngineMD/logFIX51-FASTEngineMD.txt", "a"); //writing in appending mode
+	//file = fopen("../validate-FASTEngineMD/logFIX51-FASTEngineMD.txt", "a"); //writing in appending mode
+	file = fopen("validation/logFIX51-FASTEngineMD.txt", "a");
 
 	char* ApplVerID = "9";
 	char* MsgType = "X";
@@ -78,7 +79,7 @@ void t145toFIX(
 			printvs("15=%s|", Currency + i, buff);
 			printd("451=%.2f|", NetChgPrevDay[i], buff);
 			print32i("287=%d|", SellerDays[i], buff);
-			/*print64i("1020=%ld|", TradeVolume[i], buff);*/
+			print64i("1020=%ld|", TradeVolume[i], buff);
 			printvs("274=%s|", TickDirection + i, buff);
 			printvs("277=%s|", TradeCondition + i, buff);
 			print32i("336=%d|", TradingSessionID[i], buff);
