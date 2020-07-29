@@ -1,3 +1,5 @@
+import os
+
 b3Log = "fixtestlogb3.txt"
 myLog = "logFIX51-FASTEngineMD.txt"
 
@@ -46,3 +48,4 @@ print("{:.2f}".format(noErrors/num_msgs * 100), "% of errors \n")
 
 fixlogb3.close() #close the file
 fixlogmine.close()
+os.remove("logFIX51-FASTEngineMD.txt") #delete file

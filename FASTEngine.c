@@ -2,7 +2,6 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
-//#include "t145toFIX.h"
 #include "t145toFIXFile.h"
  
 FILE* openFile(char* fileName);
@@ -10,7 +9,6 @@ void readMessage(FILE* file);
 void identifyTemplate(__uint8_t* FASTMessage, unsigned int FASTMessage_length);
 void templateDecoder(__uint16_t TemplateID, __uint32_t PMap, 
 	__uint8_t* FASTMessage, unsigned int FASTMessage_length);
-void templateDoNotIdentified(__uint16_t TemplateID);
 
 void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length);
 void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length);
@@ -244,11 +242,6 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 				NONEBITMAP, NONEBITMAP, NONEBITMAP,
 				MDEntrySize[i != 0 ? i-1 : i], initialValueI, OPTIONAL, DELTA);
 
-			/*if(i > 0 && MsgSeqNum == 732000){
-				printf("\n MDEntrySize[%d]: %ld", i, MDEntrySize[i]);
-				printf("\n MDEntrySize[%d]: %ld \n", i != 0 ? i-1 : i, MDEntrySize[i != 0 ? i-1 : i]);
-			}*/
-
 			MDEntryDate[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYDATE,  
 				MDEntryDate[i != 0 ? i-1 : i], initialValueI, OPTIONAL, COPY);
@@ -281,11 +274,6 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 			TradeVolume[i] = getField64UI(&ptr_FASTMessage, FASTMessage_length, 
 				NONEBITMAP, NONEBITMAP, NONEBITMAP,  
 				TradeVolume[i != 0 ? i-1 : i], initialValueI, OPTIONAL, DELTA);
-
-			/*if(i > 0){
-				printf("\n TradeVolume[%d]: %ld ", i, TradeVolume[i]);
-				printf("\n TradeVolume[%d]: %ld \n", i != 0 ? i-1 : i, TradeVolume[i != 0 ? i-1 : i]);
-			}*/
 
 			getFieldS(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, TICKDIRECTION,  
@@ -415,7 +403,6 @@ void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
 	__uint32_t MsgSeqNum = 0;
 	__uint64_t SendingTime = 0;
 
-	//printf(" TemplateID: 144 || Template name=MDHeartbeat_144 \n");
 	for(int i = 0; i < FASTMessage_length; i++){
     	field[field_length] = FASTMessage[i];
     	field_length++;
@@ -438,8 +425,6 @@ void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
 			field_length = 0;
     	}
     }
-    //printf(" MsgSeqNum: %d \n", MsgSeqNum);
-    //printf(" SendingTime: %ld \n", SendingTime);
     //t144toFIX(MsgSeqNum, SendingTime);
 }
 
@@ -471,7 +456,7 @@ void templateDecoder(__uint16_t TemplateID, __uint32_t PMap,
 		case 145 : MDIncRefresh_145(PMap, FASTMessage, FASTMessage_length);
 		break;
 
-		default : templateDoNotIdentified(TemplateID);
+		default : printf(" TemplateID do not identified: %d \n", TemplateID);
 	}
 }
 
@@ -490,7 +475,6 @@ void identifyTemplate(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
     		noCurrentField++;
     		if(noCurrentField == 1){
     			PMap = bytetoPMapDecoder(field, field_length);
-				//printf(" PMap: %02x \n", PMap);
 				if(!(PMap & 0b01000000)){
 					printf(" TemplateID do not specified in the message. \n");
 				}
@@ -554,10 +538,6 @@ void readMessage(FILE* file){
 
 		//printf(" ---------------------------------------------------------------------------\n\n");
 	}
-}
-
-void templateDoNotIdentified(__uint16_t TemplateID){
-	printf(" TemplateID do not identified: %d \n", TemplateID);
 }
 
 __uint32_t getField32UI(__uint8_t** FASTMessage, int FASTMessage_length, 
