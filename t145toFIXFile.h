@@ -124,7 +124,8 @@ void t145toFIX(
 }
 
 void print64i(char* text, __int64_t var, char* buff){
-	if(var != -80){
+	//if(var != -80){
+	if((int) var > 0){
 		char auxBuff[150];
 		sprintf(auxBuff, text, var);
 		strcat(buff, auxBuff);
@@ -133,7 +134,8 @@ void print64i(char* text, __int64_t var, char* buff){
 }
 
 void print32i(char* text, __int32_t var, char* buff){
-	if(var != -80){
+	//if(var != -80){
+	if((int) var >= 0){
 		char auxBuff[150];
 		sprintf(auxBuff, text, var);
 		strcat(buff, auxBuff);
