@@ -1,7 +1,8 @@
 #include <string.h>
 
 void print64i(char* text, __int64_t var, char* buff);
-void print32i(char* text, __int32_t var, char* buff);
+void print64ui(char* text, __uint64_t var, char* buff);
+void print32ui(char* text, __uint32_t var, char* buff);
 void prints(char* text, char* var, char* buff);
 void printvs(char* text, char (*var)[1000], char* buff);
 void printd(char* text, float var, char* buff);
@@ -45,86 +46,76 @@ void t145toFIX(
 	//template
 	prints("1128=%s|", ApplVerID, buff);
 	prints("35=%s|", MsgType, buff);
-	print32i("34=%d|", MsgSeqNum, buff);
-	print64i("52=%ld|", SendintTime, buff);
-	print32i("75=%d|", TradeDate, buff);
-
-	/*printf("\n\n NoMDEntries: %d \n", NoMDEntries);
-	printf("  1: %s \n", MDEntryType[0]);
-	printf("  2: %s \n", MDEntryType[1]);
-	printf("  3: %s \n", MDEntryType[2]);
-	printf("  4: %s \n\n", MDEntryType[3]);*/
+	print32ui("34=%d|", MsgSeqNum, buff);
+	print64ui("52=%ld|", SendintTime, buff);
+	print32ui("75=%d|", TradeDate, buff);
 
 	//SequenceMDEntries
 	if(NoMDEntries > 0){ //sequence
-		print32i("268=%d|", NoMDEntries, buff);
+		print32ui("268=%d|", NoMDEntries, buff);
 		for(int i = 0; i < NoMDEntries; i++){
-			print32i("279=%d|", MDUpdateAction[i], buff);
+			print32ui("279=%d|", MDUpdateAction[i], buff);
 			printvs("269=%s|", MDEntryType + i, buff);
-			print32i("22=%d|", SecurityIDSource, buff); //cte
+			print32ui("22=%d|", SecurityIDSource, buff); //cte
 			prints("207=%s|", SecurityExchange, buff);
-			print64i("48=%ld|", SecurityID[i], buff);
-			print32i("83=%d|", RptSeq[i], buff);
+			print64ui("48=%ld|", SecurityID[i], buff);
+			print32ui("83=%d|", RptSeq[i], buff);
 			printvs("276=%s|", QuoteCondition + i, buff);
 			printd("270=%.4g|", MDEntryPx[i], buff);
 			printd("37014=%.2f|", MDEntryInterestRate[i], buff);
-			print32i("346=%d|", NumberOfOrders[i], buff);
+			print32ui("346=%d|", NumberOfOrders[i], buff);
 			printvs("423=%s|", PriceType + i, buff);
-			print32i("273=%d|", MDEntryTime[i], buff);
+			print32ui("273=%d|", MDEntryTime[i], buff);
 			print64i("271=%ld|", MDEntrySize[i], buff);
-			print32i("272=%d|", MDEntryDate[i], buff);
-			print32i("37016=%d|", MDInsertDate[i], buff);
-			print32i("37017=%d|", MDInsertTime[i], buff);
+			print32ui("272=%d|", MDEntryDate[i], buff);
+			print32ui("37016=%d|", MDInsertDate[i], buff);
+			print32ui("37017=%d|", MDInsertTime[i], buff);
 			printvs("1500=%s|", MDStreamID + i, buff);
 			printvs("15=%s|", Currency + i, buff);
 			printd("451=%.2f|", NetChgPrevDay[i], buff);
-			print32i("287=%d|", SellerDays[i], buff);
-			print64i("1020=%ld|", TradeVolume[i], buff);
+			print32ui("287=%d|", SellerDays[i], buff);
+			print64ui("1020=%ld|", TradeVolume[i], buff);
 			printvs("274=%s|", TickDirection + i, buff);
 			printvs("277=%s|", TradeCondition + i, buff);
-			print32i("336=%d|", TradingSessionID[i], buff);
-			print32i("286=%d|", OpenCloseSettlFlag[i], buff);
+			print32ui("336=%d|", TradingSessionID[i], buff);
+			print32ui("286=%d|", OpenCloseSettlFlag[i], buff);
 			printvs("37=%s|", OrderID + i, buff);
 			printvs("1003=%s|", TradeID + i, buff);
 			printvs("288=%s|", MDEntryBuyer + i, buff);
 			printvs("289=%s|", MDEntrySeller + i, buff);
-			print32i("290=%d|", MDEntryPositionNo[i], buff);
-			print32i("731=%d|", SettPriceType[i], buff);
-			print32i("9325=%d|", LastTradeDate[i], buff);	
-			print32i("37013=%d|", PriceAdjustmentMethod[i], buff);
+			print32ui("290=%d|", MDEntryPositionNo[i], buff);
+			print32ui("731=%d|", SettPriceType[i], buff);
+			print32ui("9325=%d|", LastTradeDate[i], buff);	
+			print32ui("37013=%d|", PriceAdjustmentMethod[i], buff);
 			printvs("6939=%s|", PriceBandType + i, buff);
-			print32i("1306=%d|", PriceLimitType[i], buff);
+			print32ui("1306=%d|", PriceLimitType[i], buff);
 			printd("1148=%.2f|", LowLimitPrice[i], buff);
 			printd("1149=%.2f|", HighLimitPrice[i], buff);
 			printd("1150=%.2f|", TradingReferencePrice[i], buff);
-			print32i("37008=%d|", PriceBandMidpointPriceType[i], buff);
-			print64i("37003=%ld|", AvgDailyTradedQty[i], buff);
-			print64i("432=%ld|", ExpireDate[i], buff);
-			print64i("37019=%ld|", EarlyTermination[i], buff);
-			print64i("1140=%ld|", MaxTradeVol[i], buff);
+			print32ui("37008=%d|", PriceBandMidpointPriceType[i], buff);
+			print64ui("37003=%ld|", AvgDailyTradedQty[i], buff);
+			print64ui("432=%ld|", ExpireDate[i], buff);
+			print64ui("37019=%ld|", EarlyTermination[i], buff);
+			print64ui("1140=%ld|", MaxTradeVol[i], buff);
 
 			//SequenceUnderlyings
 			if(NoUnderlyings > 0){
-				print32i("711=%d|", NoUnderlyings, buff);
+				print32ui("711=%d|", NoUnderlyings, buff);
 			}
 
-			print64i("37100=%ld", IndexSeq[i], buff);
-			//printf("\n");
-			//printf("\n buffer: %s \n", buff);
+			print64ui("37100=%ld", IndexSeq[i], buff);
 		}
 	}
 
 	printf("\n");
 
-	//buff[strlen(buff)] = '\n';
 	strcat(buff, "\n");
 
 	fputs(buff, file);
 	fclose(file);
 }
 
-void print64i(char* text, __int64_t var, char* buff){
-	//if(var != -80){
+void print64ui(char* text, __uint64_t var, char* buff){
 	if((int) var > 0){
 		char auxBuff[150];
 		sprintf(auxBuff, text, var);
@@ -133,8 +124,16 @@ void print64i(char* text, __int64_t var, char* buff){
 	}
 }
 
-void print32i(char* text, __int32_t var, char* buff){
-	//if(var != -80){
+void print64i(char* text, __int64_t var, char* buff){
+	if((int) var != 0xF0000000){ //biggest 32bits negative number
+		char auxBuff[150];
+		sprintf(auxBuff, text, var);
+		strcat(buff, auxBuff);
+		PRINTI(text, var);
+	}
+}
+
+void print32ui(char* text, __uint32_t var, char* buff){
 	if((int) var >= 0){
 		char auxBuff[150];
 		sprintf(auxBuff, text, var);

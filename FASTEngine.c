@@ -43,7 +43,7 @@ __uint64_t uint64Operator(__uint64_t value, __uint64_t previousValue, __uint64_t
 	int PMapis1);
 __int64_t int64Operator(__int64_t value, __int64_t previousValue, __int64_t initialValue, int operator, 
 	int PMapis1);
-__uint32_t int32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t initialValue, int operator, 
+__uint32_t uint32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t initialValue, int operator, 
 	int PMapis1);
 void stringOperator(char* value, char* streamValue, char* previousValue, char* initialValue, int operator, 
 	int PMapIs1);
@@ -203,8 +203,6 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 			getFieldS(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYTYPE,
 				MDEntryType[i], MDEntryType[i != 0 ? i-1 : i], "0", COPY);
-
-			//printf("\n MDEntryType: %s \n", MDEntryType[i]);
 
 			SecurityID[i] = getField64UI(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, SECURITYID,
@@ -537,8 +535,6 @@ void readMessage(FILE* file){
 		}
 		//identifyTemplate(FASTMessage, FASTMessage_length);
 		FASTMessage_length = 0;
-
-		//printf(" ---------------------------------------------------------------------------\n\n");
 	}
 }
 
@@ -562,68 +558,61 @@ __uint32_t getField32UI(__uint8_t** FASTMessage, int FASTMessage_length,
 		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order);
 		value = bytetoInt32Decoder(pt_value);
 	}
-	/*else{
-		value = 0x00; //null
-	}*/
 
 	if(isNullable(isOptional, operator) && ((int) previousValue) >= 0){
 		previousValue+=1; //If an integer is nullable, every non-negative integer is incremented by 1 before it is encoded
 	}
 
-	value = int32Operator(value, previousValue, initialValue, operator, PmapIs1);
+	value = uint32Operator(value, previousValue, initialValue, operator, PmapIs1);
 
-    if(isNullable(isOptional, operator) && (int) value > 0 ){ //!=
+    if(isNullable(isOptional, operator) && (int) value > 0 ){ 
 		value--; //If an integer is nullable, every non-negative integer is incremented by 1 before it is encoded
 	}
 	else if(isNullable(isOptional, operator) && value == 0){ //added now
-		value = ABSENT; //-80; //null, absent
+		value = ABSENT; //the value is absent
 	}
 
 	return value;
 }
 
-__uint32_t int32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t initialValue, 
+__uint32_t uint32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t initialValue, 
 	int operator, int PMapIs1){
 	
 	//if the value isnt present in the stream, bcs if yes the value in the stream is the new value
 	if(operator == COPY && !PMapIs1){ 
-		if(previousValue != UNDEFINED && previousValue != ABSENT){ // 0){ //assigned
+		if(previousValue != UNDEFINED && previousValue != ABSENT){ //assigned
 			value = previousValue; //the value of the field is the previous value
 		}
-		else if(previousValue == UNDEFINED){ //undefined 
+		else if(previousValue == UNDEFINED){
 			value = initialValue; //the value of the field is the initial value
 		}
-		else if(previousValue == ABSENT){ // 0){ //EMPTY
+		else if(previousValue == ABSENT){ //EMPTY
 			value = ABSENT; // 0;
 		}
     }
     else if(operator == INCREMENT && !PMapIs1){
-		if(previousValue != UNDEFINED && previousValue !=  ABSENT){ //0){ //assigned
+		if(previousValue != UNDEFINED && previousValue !=  ABSENT){ //assigned
 			value = previousValue + 1; //the value of the field is the previous value +1
 		}
 		else if(previousValue == UNDEFINED){ //undefined 
 			value = initialValue; //the value of the field is the initial value
 		}
-		else if(previousValue == ABSENT){ // 0){ //EMPTY
-			value = ABSENT; // 0;
+		else if(previousValue == ABSENT){ //EMPTY
+			value = ABSENT; 
 		}
     }
     else if(operator == DELTA){
-    	int delta = 0, base = 0;
-    	if(PMapIs1){ //if pmap is 1 //the value is present in the stream
-    		delta = value; //delta //the delta is present in the stream
-    	}
-    	else{ //value is not present in the stream
-    		if(previousValue != UNDEFINED && previousValue != ABSENT){ //} 0){ //assigned
-    			base = previousValue;
-    		}
-    		else if(previousValue == UNDEFINED){ //undefined 
-				base = initialValue; //the value of the field is the initial value
-			}
-			else if(previousValue == ABSENT){ // 0){ //EMPTY
-				value = ABSENT; // 0;
-			}
-    	}
+    	__int64_t delta = 0, base = 0;
+    	delta = value; //the delta is present in the stream
+    	if(previousValue != UNDEFINED && previousValue != ABSENT){ //} 0){ //assigned
+			base = previousValue;
+		}
+		else if(previousValue == UNDEFINED){ //undefined 
+			base = initialValue; //the value of the field is the initial value
+		}
+		else if(previousValue == ABSENT){ //EMPTY
+			value = ABSENT; 
+		}
     	value = base + delta;
     }
     else if(operator == DEFAULT && !PMapIs1){ 
@@ -653,23 +642,18 @@ __uint64_t getField64UI(__uint8_t** FASTMessage, int FASTMessage_length,
 		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order);
 		value = bytetoInt64Decoder(pt_value);
 	}
-	/*else{
-		value = 0x00; //null
-	}*/
 
-	if(isNullable(isOptional, operator) && (((int) previousValue) >= 0)){ // || ((int) previousValue != -80))){ //>=
+	if(isNullable(isOptional, operator) && (((int) previousValue) >= 0)){
 		previousValue+=1; //If an integer is nullable, every non-negative integer is incremented by 1 before it is encoded
-		/*printf("\n PV: %d ", previousValue);
-		printf("\n %d \n ", isNegative(previousValue));*/
 	}
 
 	value = uint64Operator(value, previousValue, initialValue, operator, PmapIs1);
 
-    if(isNullable(isOptional, operator) && (int) value > 0){ //value != 0x00){
+    if(isNullable(isOptional, operator) && (int) value > 0){ 
 		value--; //If an integer is nullable, every non-negative int is incremented by 1 before it is encoded
 	}
-	else if(isNullable(isOptional, operator) && value == 0){ //added now
-		value = ABSENT; //-80; //null, absent
+	else if(isNullable(isOptional, operator) && value == 0){ 
+		value = ABSENT; 
 	}
 
 	return value;
@@ -680,41 +664,37 @@ __uint64_t uint64Operator(__uint64_t value, __uint64_t previousValue, __uint64_t
 
 	//if the value isnt present in the stream, bcs if yes the value in the stream is the new value
 	if(operator == COPY && !PMapIs1){ 
-		if(previousValue != UNDEFINED && previousValue != ABSENT){ // 0){ //assigned
+		if(previousValue != UNDEFINED && previousValue != ABSENT){ //assigned
 			value = previousValue; //the value of the field is the previous value
 		}
 		else if(previousValue == UNDEFINED){ //undefined 
 			value = initialValue; //the value of the field is the initial value
 		}
-		else if(previousValue == ABSENT){ // 0){ //EMPTY
+		else if(previousValue == ABSENT){ //EMPTY
 			value = ABSENT; // 0;
 		}
     }
     else if(operator == INCREMENT && !PMapIs1){
-		if(previousValue != UNDEFINED && previousValue != ABSENT){ //0){ //assigned
+		if(previousValue != UNDEFINED && previousValue != ABSENT){ //assigned
 			value++; //the value of the field is the previous value +1
 		}
 		else if(previousValue == UNDEFINED){ //undefined 
 			value = initialValue; //the value of the field is the initial value
 		}
-		else if(previousValue == ABSENT){ //0){ //EMPTY
+		else if(previousValue == ABSENT){ //EMPTY
 			value = ABSENT; // 0;
 		}
     }
     else if(operator == DELTA){
 		__int64_t delta = 0, base = 0;
     	delta = value; //a delta value is present in the stream
-		if(previousValue != UNDEFINED && previousValue != 0){ //assigned
+		if(previousValue != UNDEFINED && previousValue != ABSENT){ //assigned
 			base = previousValue;
-			if(isNegative(delta)){ //is negative  /*need to creat a intDecoderFunction*/
-				delta-= 128; //2's complement
-				delta+=1; //it's nullable
-			}
 		}
 		else if(previousValue == UNDEFINED){ //undefined 
 			base = initialValue; //the value of the field is the initial value
 		}
-		else if(previousValue == 0){ //EMPTY
+		else if(previousValue == ABSENT){ //EMPTY
 			value = 0;
 		}
     	value = base + delta;
@@ -732,7 +712,7 @@ __int64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length,
 
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
 	__uint8_t streamValue[7000];
-	__int64_t value;
+	__int64_t value = 0;
   	int thereIsPMap = 0, PmapIs1 = 0;
 
 	if(PMap_order > 0){
@@ -754,9 +734,6 @@ __int64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length,
 			value+=1; //nullable
 		}
 	}
-	else{
-		value = 0x00; //null
-	}
 
 	value = int64Operator(value, previousValue, initialValue, operator, PmapIs1);
 
@@ -764,7 +741,7 @@ __int64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length,
 		value--; //If an integer is nullable, every non-negative int is incremented by 1 before it is encoded
 	}
 	else if(isNullable(isOptional, operator) && value == 0x00){ //added now
-		value = -99999; //null, absent
+		value = ABSENT; 
 	}
 
 	return value;
@@ -773,18 +750,16 @@ __int64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length,
 __int64_t int64Operator(__int64_t value, __int64_t previousValue, __int64_t initialValue, int operator, 
 	int PMapIs1){
 
-	__int64_t delta = 0, base = 0;
-
 	//if the value isnt present in the stream, bcs if yes the value in the stream is the new value
 	if(operator == COPY && !PMapIs1){ 
-		if(previousValue != UNDEFINED && previousValue != 0){ //assigned
+		if(previousValue != UNDEFINED && previousValue != ABSENT){ //assigned
 			value = previousValue; //the value of the field is the previous value
 		}
 		else if(previousValue == UNDEFINED){ //undefined 
 			value = initialValue; //the value of the field is the initial value
 		}
-		else if(previousValue == 0){ //EMPTY
-			value = 0;
+		else if(previousValue == ABSENT){ //EMPTY
+			value = ABSENT;
 		}
     }
     else if(operator == INCREMENT && !PMapIs1){
@@ -795,23 +770,20 @@ __int64_t int64Operator(__int64_t value, __int64_t previousValue, __int64_t init
 			value = initialValue; //the value of the field is the initial value
 		}
 		else if(previousValue == 0){ //EMPTY
-			value = 0;
+			value = ABSENT;
 		}
     }
     else if(operator == DELTA){
+		__int64_t delta = 0, base = 0;
     	delta = value; //a delta value is present in the stream
-		if(previousValue != UNDEFINED && previousValue != -99999){ //assigned (think about a null code)
+		if(previousValue != UNDEFINED && previousValue != ABSENT){ //assigned (think about a null code)
 			base = previousValue;
-			/*if(isNegative(delta)){ //is negative  /*need to creat a intDecoderFunction*/
-			/*	delta-= 128; //2's complement
-				delta+=1; //it's nullable
-			}*/
 		}
 		else if(previousValue == UNDEFINED){ //undefined 
 			base = initialValue; //the value of the field is the initial value
 		}
 		else if(previousValue == 0){ //EMPTY
-			value = 0;
+			value = ABSENT;
 		}
     	value = base + delta;
     }
