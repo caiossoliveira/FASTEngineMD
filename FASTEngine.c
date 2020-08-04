@@ -745,31 +745,17 @@ __int64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length,
 	if((thereIsPMap && PmapIs1) || !thereIsPMap){ //if the value is in the stream (nullable or not)
 		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order);
 		value = bytetoInt64Decoder(pt_value);
-		/*printf("\n value in hex: ");
-		while(*pt_value){
-			printf(" %02x", (unsigned int) *pt_value++);
-		}
-		printf("\n value in dec: %ld \n", value);*/
+		
 		int size = fieldLength(pt_value);
 		size = (size * 8) - size;
-		printf("\n\n number: %d size: %d \n\n", twosComplement(value, size), size);
 
 		value = twosComplement(value, size);
-		//if(value & 0b0100000000000000000000000000000000000000000000000000000000000000){
-		/*if(isNegative64(value, fieldLength(pt_value))){
-			value-= 128; //2's complement //maybe it's only works for 1 byte number
-			//printf(" value decoded: %ld \n", value);
+		if(isNegative64(value, fieldLength(pt_value))){
 			value+=1; //nullable
-		}*/
+		}
 	}
 	else{
 		value = 0x00; //null
-	}
-
-	if(isNullable(isOptional, operator) &&  previousValue >= 0){
-		//previousValue+=1; //If an integer is nullable, every non-negative integer is incremented by 1 before it is encoded
-		/*printf("\n PV: %d ", previousValue);
-		printf("\n %d \n ", isNegative(previousValue));*/
 	}
 
 	value = int64Operator(value, previousValue, initialValue, operator, PmapIs1);
