@@ -671,7 +671,7 @@ __uint64_t uint64Operator(__uint64_t value, __uint64_t previousValue, __uint64_t
 			value = initialValue; //the value of the field is the initial value
 		}
 		else if(previousValue == ABSENT){ //EMPTY
-			value = ABSENT; // 0;
+			value = ABSENT; 
 		}
     }
     else if(operator == INCREMENT && !PMapIs1){
@@ -727,7 +727,7 @@ __int64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length,
 		value = bytetoInt64Decoder(pt_value);
 		
 		int size = fieldLength(pt_value);
-		size = (size * 8) - size;
+		size = (size * 8) - size; //- size because of the end bits
 
 		value = twosComplement(value, size);
 		if(isNegative64(value, fieldLength(pt_value))){
@@ -782,7 +782,7 @@ __int64_t int64Operator(__int64_t value, __int64_t previousValue, __int64_t init
 		else if(previousValue == UNDEFINED){ //undefined 
 			base = initialValue; //the value of the field is the initial value
 		}
-		else if(previousValue == 0){ //EMPTY
+		else if(previousValue == ABSENT){ //EMPTY
 			value = ABSENT;
 		}
     	value = base + delta;
@@ -893,9 +893,7 @@ void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length,
 	__uint8_t streamField[7000];
 
   	int thereIsPMap = 0, PmapIs1 = 0;
-  	char /*previousValue[1500],*/ auxValue[1500], streamValue[1500];
-
-  	//strcpy(previousValue, value);
+  	char auxValue[1500], streamValue[1500] = {0};
 
 	if(PMap_order > 0){ //if the field has a bit representation in bitmap
 		thereIsPMap = 1;
@@ -908,19 +906,15 @@ void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length,
 		__uint8_t* pt_streamValue = getField(streamField, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order);
 		strcpy(streamValue, pt_streamValue); //get the stream value
 	}
-	else{
+	/*else{
 		*streamValue = 0x80; //stream value is absent
-	}
+	}*/
 
 	strcpy(streamValue, bytetoStringDecoder(streamValue)); //decode the stream value
 
 	stringOperator(auxValue, streamValue, previousValue, initialValue, operator, PmapIs1); //apply operator
 
 	strcpy(value, auxValue); //copy to the new value of the field
-
-	/*if(PMap_order == MDENTRYTYPE){
-		printf("\n value: %s ", value);
-	}*/
 }
 
 void stringOperator(char* value, char* streamValue, char* previousValue, char* initialValue, 
@@ -962,7 +956,7 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
 	if(PMap_order > 0){
 		if(!(pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 0 (!1)
 			if(!isDecimal(PMap_order)){ //if bitsmap's bit is 0 and is not decimal, return NULL
-				newField[0] = 0x00; //need to think about this character
+				newField[0] = 0x80; // biggest negative number 0X00 need to think about this character
 				return newField;
 			}
 		}
