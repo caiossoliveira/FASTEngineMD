@@ -19,19 +19,15 @@ void MD145Handler(__uint32_t MDUpdateAction, char* MDEntryType, __uint32_t RptSe
 __uint32_t getField32UI(__uint8_t** FASTMessage, int FASTMessage_length, 
 	__uint32_t PMap, int PMap_length, int PMap_order,
 	__uint32_t previousValue, __uint32_t initialValue, int isOptional, int operator);
-
 __uint64_t getField64UI(__uint8_t** FASTMessage, int FASTMessage_length, 
 	__uint32_t PMap, int PMap_length, int PMap_order,
 	__uint64_t previousValue, __uint64_t initialValue, int isOptional, int operator);
-
 __int64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length, 
 	__uint32_t PMap, int PMap_length, int PMap_order,
 	__int64_t previousValue, __int64_t initialValue, int isOptional, int operator);
-
 void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, 
 	__uint32_t PMap, int PMap_length, int PMap_order,
 	char* value, char* previousValue, char* initialValue, int operator);
-
 float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length, 
 	__uint32_t PMap, int PMap_length, int PMap_order,
 	float previousValue, int operator, 
@@ -60,7 +56,6 @@ __uint32_t bytetoPMapDecoder(__uint8_t* field, __int32_t field_length);
 __uint32_t fieldLength(__uint8_t* field);
 int pMapCheck(__uint32_t PMap, int PMap_length, __uint32_t noCurrentField);
 int isNegative(__int64_t val, __uint32_t size);
-//int isNegative64(int64_t val, __uint32_t size);
 int isNullable(int isOptional, int operator);
 int twosComplement(int number, int size);
  
@@ -747,8 +742,7 @@ __int64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length,
 __int64_t int64Operator(__int64_t value, __int64_t previousValue, __int64_t initialValue, int operator, 
 	int PMapIs1){
 
-	//if the value isnt present in the stream, bcs if yes the value in the stream is the new value
-	if(operator == COPY && !PMapIs1){ 
+	if(operator == COPY && !PMapIs1){  //value is not present in the stream, otherwise the stream value is the new value
 		if(previousValue != UNDEFINED && previousValue != ABSENT){ //assigned
 			value = previousValue; //the value of the field is the previous value
 		}
@@ -814,7 +808,6 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 	}
 
 	if(thereIsPMap && PMapIs1){ //If set, the value appears in the stream in a nullable representation
-		//printf("\nThere is pmap and is 1: %d ", PMap_order);
 		ptrExp = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); //there is a exp in the msg
 		if(*ptrExp != 0x80){ //if it is non null
 			exp = bytetoInt32Decoder(ptrExp); //decode the exp
@@ -823,13 +816,11 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 			size = (size * 8) - size; //- size because of the end bits
 
 			if(isNegative(exp, size)){
-				//exp-= 128; //2's complement
 				exp = twosComplement(exp, size);
 			}
 			else{
 				exp-= 1; //nullable -1
 			}
-			//printf("\nExp: %d %d ", PMap_order, exp);
 			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); //get the mantissa
 			mant = bytetoInt64Decoder(ptrMant); 
 		}
@@ -1010,62 +1001,6 @@ int isNullable(int isOptional, int operator){
 int isNegative(int64_t number, __uint32_t size){
 	return (number & (1 << size - 1)) != 0;
 }
-
-/*int isNegative64(int64_t val, __uint32_t size){
-	int isNegative = 0;
-    
-	if(size == 1){
-		if(val & 0b01000000){ //8bits
-            isNegative = 1;
-        }
-	}
-	else if(size == 2){
-		if(val & 0b0100000000000000){ // 16 bits
-			isNegative = 1;
-        }
-	}
-	else if(size == 4){
-		if(val & 0b01000000000000000000000000000000){ // 32 bits 
-			isNegative = 1;
-        }
-	}
-	else if(size == 8){
-		if(val & 0b0100000000000000000000000000000000000000000000000000000000000000){ // 64 bits
-			isNegative = 1;
-        }
-	}
-    return isNegative;
-}*/
-
-/*int isNegative(int val){
-	int isNegative = 0;
-    
-    if(val < 0x10000){
-        if (val < 0x100){
-            if(val & 0b01000000){ //8bits
-                isNegative = 1;
-            }
-        }
-        else{
-			if(val & 0b0100000000000000){ // 16 bits
-				isNegative = 1;
-            }
-        } 
-    }else{
-        if (val < 0x100000000L){
-			if(val & 0b01000000000000000000000000000000){ // 32 bits 
-				isNegative = 1;
-            }
-        }
-        else{ // 64 bit
-			if(val & 0b0100000000000000000000000000000000000000000000000000000000000000){ // 64 bits
-				isNegative = 1;
-            }
-        }
-    }
-    
-    return isNegative;
-}*/
 
 float bytetoDecimalDecoder(__uint8_t* field){
 	field = field+1;
