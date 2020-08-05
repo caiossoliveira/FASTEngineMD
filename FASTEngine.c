@@ -6,39 +6,39 @@
  
 FILE* openFile(char* fileName);
 void readMessage(FILE* file);
-void identifyTemplate(__uint8_t* FASTMessage, unsigned int FASTMessage_length);
+void identifyTemplate(__uint8_t* FASTMessage, int FASTMessage_length);
 void templateDecoder(__uint16_t TemplateID, __uint32_t PMap, 
-	__uint8_t* FASTMessage, unsigned int FASTMessage_length);
+	__uint8_t* FASTMessage, int FASTMessage_length);
 
-void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length);
-void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length);
+void MDHeartbeat_144(__uint8_t* FASTMessage, int FASTMessage_length);
+void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_length);
 
 void MD145Handler(__uint32_t MDUpdateAction, char* MDEntryType, __uint32_t RptSeq, char* QuoteCondition, 
 	__uint64_t SecurityID, __uint32_t MDEntryTime, float MDEntryPx, __uint64_t MDEntrySize);
 
 __uint32_t getField32UI(__uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order,
-	__uint32_t previousValue, __uint32_t initialValue, unsigned int isOptional, unsigned int operator);
+	__uint32_t PMap, int PMap_length, int PMap_order,
+	__uint32_t previousValue, __uint32_t initialValue, int isOptional, int operator);
 
 __uint64_t getField64UI(__uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order,
-	__uint64_t previousValue, __uint64_t initialValue, unsigned int isOptional, unsigned int operator);
+	__uint32_t PMap, int PMap_length, int PMap_order,
+	__uint64_t previousValue, __uint64_t initialValue, int isOptional, int operator);
 
 __int64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order,
-	__int64_t previousValue, __int64_t initialValue, unsigned int isOptional, unsigned int operator);
+	__uint32_t PMap, int PMap_length, int PMap_order,
+	__int64_t previousValue, __int64_t initialValue, int isOptional, int operator);
 
 void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order,
-	char* value, char* previousValue, char* initialValue, unsigned int operator);
+	__uint32_t PMap, int PMap_length, int PMap_order,
+	char* value, char* previousValue, char* initialValue, int operator);
 
 float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order,
-	float previousValue, unsigned int operator, 
-	unsigned int expOperator, unsigned int mantOperator, __int32_t initialExp);
+	__uint32_t PMap, int PMap_length, int PMap_order,
+	float previousValue, int operator, 
+	int expOperator, int mantOperator, __int32_t initialExp);
 
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order);
+	__uint32_t PMap, int PMap_length, int PMap_order, int isDecimal);
 __uint64_t uint64Operator(__uint64_t value, __uint64_t previousValue, __uint64_t initialValue, int operator, 
 	int PMapis1);
 __int64_t int64Operator(__int64_t value, __int64_t previousValue, __int64_t initialValue, int operator, 
@@ -58,14 +58,11 @@ __uint32_t bytetoInt32Decoder(__uint8_t* field);
 __uint64_t bytetoInt64Decoder(__uint8_t* field);
 __uint32_t bytetoPMapDecoder(__uint8_t* field, __int32_t field_length);
 __uint32_t fieldLength(__uint8_t* field);
-int pMapCheck(__uint32_t PMap, unsigned int PMap_length, __uint32_t noCurrentField);
-int isDecimal(unsigned int PMap_order);
-int isNegative(int val);
-int isNegative64(int64_t val, __uint32_t size);
+int pMapCheck(__uint32_t PMap, int PMap_length, __uint32_t noCurrentField);
+int isNegative(__int64_t val, __uint32_t size);
+//int isNegative64(int64_t val, __uint32_t size);
 int isNullable(int isOptional, int operator);
 int twosComplement(int number, int size);
-
-void test();
  
 __uint64_t globalSecurityID = 3809639;
 float book[10] = {9999.0, 9999.0, 9999.0, 9999.0, 9999.0, -9999.0, -9999.0, -9999.0, -9999.0, -9999.0};
@@ -86,7 +83,7 @@ int main () {
     return 0;
 }
 
-void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FASTMessage_length){
+void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_length){
 	#define NONEBITMAP 0
 	#define MDUPDATEACTION 1
 	#define MDENTRYTYPE 2
@@ -131,7 +128,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	#define ABSENT 0xF0000000 //biggest negative number
 
 	__uint8_t* ptr_FASTMessage = FASTMessage+3; //MsgSeqNum is the first here but the third in the message
-	__uint8_t field[7000] = {0x80}; //FIX/FAST encoded MD is no larger than 1420 bytes including the header
+	__uint8_t field[1500] = {0x80}; //FIX/FAST encoded MD is no larger than 1420 bytes including the header
 
 	//Template
 	__uint32_t MsgSeqNum = UNDEFINED, TradeDate = UNDEFINED;
@@ -191,7 +188,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	if(NoMDEntries > 0){ //sequence
 		for(int i = 0; i < NoMDEntries; i++){
 			__uint8_t* aux = getField(field, &ptr_FASTMessage, FASTMessage_length,	
-				NONEBITMAP, NONEBITMAP, NONEBITMAP);
+				NONEBITMAP, NONEBITMAP, NONEBITMAP, 0);
 			
 			MDEntriesSequence_PMap_length = fieldLength(aux);
 			MDEntriesSequence_PMap = bytetoInt32Decoder(aux);
@@ -396,8 +393,8 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	);
 }
 
-void MDHeartbeat_144(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
-	__uint8_t field[7000] = {0x00};
+void MDHeartbeat_144(__uint8_t* FASTMessage, int FASTMessage_length){
+	__uint8_t field[1500] = {0x00};
 	unsigned int field_length = 0;
 	unsigned int noTemplateField = 0;
 	__uint32_t MsgSeqNum = 0;
@@ -446,7 +443,7 @@ void MD145Handler(__uint32_t MDUpdateAction, char* MDEntryType, __uint32_t RptSe
 }
 
 void templateDecoder(__uint16_t TemplateID, __uint32_t PMap, 
-	__uint8_t* FASTMessage, unsigned int FASTMessage_length){
+	__uint8_t* FASTMessage, int FASTMessage_length){
 	
 	switch(TemplateID)
 	{
@@ -460,8 +457,8 @@ void templateDecoder(__uint16_t TemplateID, __uint32_t PMap,
 	}
 }
 
-void identifyTemplate(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
-	__uint8_t field[7000];
+void identifyTemplate(__uint8_t* FASTMessage, int FASTMessage_length){
+	__uint8_t field[1500];
     __uint32_t PMap = 0;
     __uint16_t TemplateID = 0;
     unsigned int field_length = 0;
@@ -495,7 +492,7 @@ void identifyTemplate(__uint8_t* FASTMessage, unsigned int FASTMessage_length){
 void readMessage(FILE* file){
 	__uint8_t header[10];
 	__uint8_t byte;
-	__uint8_t FASTMessage[70000]; //2 bytes of MsgLength is the limit
+	__uint8_t FASTMessage[1500]; //2 bytes of MsgLength is the limit
 	unsigned int FASTMessage_length = 0;
 	unsigned int current_field = 0;
 	int MsgSeqNum = 0;
@@ -539,11 +536,11 @@ void readMessage(FILE* file){
 }
 
 __uint32_t getField32UI(__uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order,
-	__uint32_t previousValue, __uint32_t initialValue, unsigned int isOptional, unsigned int operator){
+	__uint32_t PMap, int PMap_length, int PMap_order,
+	__uint32_t previousValue, __uint32_t initialValue, int isOptional, int operator){
 
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
-	__uint8_t streamValue[7000];
+	__uint8_t streamValue[1500];
     __uint32_t value = 0;
   	int thereIsPMap = 0, PmapIs1 = 0;
 
@@ -555,7 +552,7 @@ __uint32_t getField32UI(__uint8_t** FASTMessage, int FASTMessage_length,
 	}
 
 	if((thereIsPMap && PmapIs1) || !thereIsPMap){ //if the value is in the stream (nullable or not)
-		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order);
+		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 0);
 		value = bytetoInt32Decoder(pt_value);
 	}
 
@@ -623,11 +620,11 @@ __uint32_t uint32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t
 }
 
 __uint64_t getField64UI(__uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order,
-	__uint64_t previousValue, __uint64_t initialValue, unsigned int isOptional, unsigned int operator){
+	__uint32_t PMap, int PMap_length, int PMap_order,
+	__uint64_t previousValue, __uint64_t initialValue, int isOptional, int operator){
 
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
-	__uint8_t streamValue[7000];
+	__uint8_t streamValue[1500];
 	__uint64_t value = 0;
   	int thereIsPMap = 0, PmapIs1 = 0;
 
@@ -639,7 +636,7 @@ __uint64_t getField64UI(__uint8_t** FASTMessage, int FASTMessage_length,
 	}
 
 	if((thereIsPMap && PmapIs1) || !thereIsPMap){ //if the value is in the stream (nullable or not)
-		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order);
+		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 0);
 		value = bytetoInt64Decoder(pt_value);
 	}
 
@@ -707,11 +704,11 @@ __uint64_t uint64Operator(__uint64_t value, __uint64_t previousValue, __uint64_t
 }
 
 __int64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order,
-	__int64_t previousValue, __int64_t initialValue, unsigned int isOptional, unsigned int operator){
+	__uint32_t PMap, int PMap_length, int PMap_order,
+	__int64_t previousValue, __int64_t initialValue, int isOptional, int operator){
 
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
-	__uint8_t streamValue[7000];
+	__uint8_t streamValue[1500];
 	__int64_t value = 0;
   	int thereIsPMap = 0, PmapIs1 = 0;
 
@@ -723,14 +720,14 @@ __int64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length,
 	}
 
 	if((thereIsPMap && PmapIs1) || !thereIsPMap){ //if the value is in the stream (nullable or not)
-		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order);
+		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 0);
 		value = bytetoInt64Decoder(pt_value);
 		
 		int size = fieldLength(pt_value);
 		size = (size * 8) - size; //- size because of the end bits
 
 		value = twosComplement(value, size);
-		if(isNegative64(value, fieldLength(pt_value))){
+		if(isNegative(value, size)){
 			value+=1; //nullable
 		}
 	}
@@ -795,12 +792,12 @@ __int64_t int64Operator(__int64_t value, __int64_t previousValue, __int64_t init
 }
 
 float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order,
-	float previousValue, unsigned int operator, 
-	unsigned int expOperator, unsigned int mantOperator, __int32_t initialExp){
+	__uint32_t PMap, int PMap_length, int PMap_order,
+	float previousValue, int operator, 
+	int expOperator, int mantOperator, __int32_t initialExp){
 
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
-    __uint8_t streamValue[7000];
+    __uint8_t streamValue[1500];
 
     __uint8_t* ptrExp = NULL;
     __uint8_t* ptrMant = NULL;
@@ -818,17 +815,22 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 
 	if(thereIsPMap && PMapIs1){ //If set, the value appears in the stream in a nullable representation
 		//printf("\nThere is pmap and is 1: %d ", PMap_order);
-		ptrExp = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order); //there is a exp in the msg
-		if(*ptrExp != 0x80){ //if it is no zero
+		ptrExp = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); //there is a exp in the msg
+		if(*ptrExp != 0x80){ //if it is non null
 			exp = bytetoInt32Decoder(ptrExp); //decode the exp
-			if(isNegative(exp)){
-				exp-= 128; //2's complement
+
+			int size = fieldLength(ptrExp);
+			size = (size * 8) - size; //- size because of the end bits
+
+			if(isNegative(exp, size)){
+				//exp-= 128; //2's complement
+				exp = twosComplement(exp, size);
 			}
 			else{
 				exp-= 1; //nullable -1
 			}
 			//printf("\nExp: %d %d ", PMap_order, exp);
-			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order); //get the mantissa
+			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); //get the mantissa
 			mant = bytetoInt64Decoder(ptrMant); 
 		}
 	}
@@ -836,7 +838,7 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 		exp = -80;
 		if(initialExp != 0){ 
 			//exp = initialExp; //change to the operator function // so there is no exp, then is no exp in the msg, so the default is -2
-			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order); //get the mantissa
+			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); //get the mantissa
 			mant = bytetoInt64Decoder(ptrMant); //decode the mantissa
 		}
 	}
@@ -886,11 +888,11 @@ float decimalOperator(float previousValue, __int64_t valueExp, __int64_t previou
 	char* value, unsigned int operator, char* initialValue){*/
 
 void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order,
-	char* value, char* previousValue, char* initialValue, unsigned int operator){
+	__uint32_t PMap, int PMap_length, int PMap_order,
+	char* value, char* previousValue, char* initialValue, int operator){
 
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
-	__uint8_t streamField[7000];
+	__uint8_t streamField[1500];
 
   	int thereIsPMap = 0, PmapIs1 = 0;
   	char auxValue[1500], streamValue[1500] = {0};
@@ -903,7 +905,7 @@ void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length,
 	}
 
 	if((thereIsPMap && PmapIs1) || !thereIsPMap){ //if the value is in the field (nullable or not)
-		__uint8_t* pt_streamValue = getField(streamField, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order);
+		__uint8_t* pt_streamValue = getField(streamField, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 0);
 		strcpy(streamValue, pt_streamValue); //get the stream value
 	}
 	/*else{
@@ -944,19 +946,19 @@ void stringOperator(char* value, char* streamValue, char* previousValue, char* i
 }
 
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_length, unsigned int PMap_order){
+	__uint32_t PMap, int PMap_length, int PMap_order, int isDecimal){
 
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
     int field_length = 0;
 
-	for(int i = 0; i < 7000; i++){ //clean the buffer
+	for(int i = 0; i < 1500; i++){ //clean the buffer
 		newField[i] = 0x00;
 	}
 
 	if(PMap_order > 0){
 		if(!(pMapCheck(PMap, PMap_length, PMap_order))){ //if the bitmap's bit is 0 (!1)
-			if(!isDecimal(PMap_order)){ //if bitsmap's bit is 0 and is not decimal, return NULL
-				newField[0] = 0x80; // biggest negative number 0X00 need to think about this character
+			if(!isDecimal){ //if bitsmap's bit is 0 and is not decimal, return NULL
+				newField[0] = 0x80; //biggest negative number and null symbol (need to think about this character)
 				return newField;
 			}
 		}
@@ -970,17 +972,6 @@ __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessag
 	    	return newField;
     	}
     }
-}
-
-int isDecimal(unsigned int PMap_order){
-	switch(PMap_order){
-		case MDENTRYPX : return 1;
-		case MDENTRYINTERESTRATE : return 1;
-		case LOWLIMITPRICE : return 1;
-		case HIGHLIMITPRICE : return 1;
-		case TRADINGREFERENCEPRICE: return 1;
-		default : return 0;
-	}
 }
 
 int twosComplement(int number, int size){
@@ -1016,7 +1007,11 @@ int isNullable(int isOptional, int operator){
 	}	
 }
 
-int isNegative64(int64_t val, __uint32_t size){
+int isNegative(int64_t number, __uint32_t size){
+	return (number & (1 << size - 1)) != 0;
+}
+
+/*int isNegative64(int64_t val, __uint32_t size){
 	int isNegative = 0;
     
 	if(size == 1){
@@ -1040,9 +1035,9 @@ int isNegative64(int64_t val, __uint32_t size){
         }
 	}
     return isNegative;
-}
+}*/
 
-int isNegative(int val){
+/*int isNegative(int val){
 	int isNegative = 0;
     
     if(val < 0x10000){
@@ -1070,7 +1065,7 @@ int isNegative(int val){
     }
     
     return isNegative;
-}
+}*/
 
 float bytetoDecimalDecoder(__uint8_t* field){
 	field = field+1;
@@ -1191,22 +1186,8 @@ char* bytetoStringDecoder(__uint8_t* field){
 	return field;
 }
 
-int pMapCheck(__uint32_t PMap, unsigned int PMap_length, __uint32_t noCurrentField){
+int pMapCheck(__uint32_t PMap, int PMap_length, __uint32_t noCurrentField){
 	__uint32_t aux_bitMap = 0b00000000000000000000000000000001;
-
-	//printf("\n PMap_length: %d\n ", PMap_length);
-
-	/*if((PMap & (aux_bitMap << ((32) - PMap_length - noCurrentField))) != (PMap & (aux_bitMap << ((PMap_length * 8) - PMap_length - noCurrentField)))){
-		printf("\n Wrong: ");
-		printf("\n PMap: %d ", PMap);
-		printf("\n PMap_Length: %d ", PMap_length);
-		printf("\n noCurrentField: %d \n", noCurrentField);
-	}else{
-		printf("\n Right: ");
-		printf("\n PMap: %d ", PMap);
-		printf("\n PMap_Length: %d ", PMap_length);
-		printf("\n noCurrentField: %d \n", noCurrentField);
-	}*/
 
 	if(PMap & (aux_bitMap << ((PMap_length * 8) - PMap_length - noCurrentField))){ //if bitsmap's bit is 1
 		return 1;
