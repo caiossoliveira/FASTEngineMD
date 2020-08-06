@@ -522,7 +522,8 @@ void readMessage(FILE* file){
 		if(MsgSeqNum > 731952 && MsgSeqNum < 732034){ //731915){ //only to compare with the FIX log
 			printf("\n-----------------------------------------------------------------------------------------------------\n");
 			//printf(" \n Message %d: \n", i+1);
-			//printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n", MsgSeqNum, NoChunks, CurrentChunk, MsgLength);
+			//printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n", MsgSeqNum, 
+				//NoChunks, CurrentChunk, MsgLength);
 			identifyTemplate(FASTMessage, FASTMessage_length);
 		}
 		//identifyTemplate(FASTMessage, FASTMessage_length);
@@ -570,8 +571,7 @@ __uint32_t getField32UI(__uint8_t** FASTMessage, int FASTMessage_length,
 __uint32_t uint32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t initialValue, 
 	int operator, int PMapIs1){
 	
-	//if the value isnt present in the stream, bcs if yes the value in the stream is the new value
-	if(operator == COPY && !PMapIs1){ 
+	if(operator == COPY && !PMapIs1){ //if the value isnt present in the stream, bcs if y the value in the stream = the new value
 		if(previousValue != UNDEFINED && previousValue != ABSENT){ //assigned
 			value = previousValue; //the value of the field is the previous value
 		}
@@ -790,8 +790,6 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 	float previousValue, int operator, 
 	int expOperator, int mantOperator, __int32_t initialExp){
 
-	/* arquivar PMap_order, exp and/or mant */
-
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
     __uint8_t streamValue[1500];
 
@@ -809,8 +807,8 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 		}
 	}
 
-	if(thereIsPMap && PMapIs1){ //If set, the value appears in the stream in a nullable representation
-		ptrExp = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); //there is a exp in the msg
+	if(thereIsPMap && PMapIs1){ //If set, the value appears in the stream in a nullable representation. There's a exp in the msg
+		ptrExp = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); 
 		if(*ptrExp != 0x80){ //if it is non null
 			exp = bytetoInt32Decoder(ptrExp); //decode the exp
 
@@ -831,7 +829,6 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 		exp = -80;
 
 		if(initialExp != 0){ 
-			//exp = initialExp; //change to the operator function // so there is no exp, then is no exp in the msg, so the default is -2
 			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); //get the mantissa
 			mant = bytetoInt64Decoder(ptrMant); //decode the mantissa
 
@@ -841,8 +838,6 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 			mant = twosComplement(mant, size);
 		}
 	}
-
-	//decimal = decimalOperator(exp, 0.0, initialExp, 0, mant, 0.0, 0.0, 0, PMapIs1);
 
 	decimal = decimalOperator(previousValue, exp, 0.0, initialExp, mant, 0, 0, 0, DEFAULT, DELTA, PMapIs1);
 
@@ -854,8 +849,6 @@ float decimalOperator(float previousValue, __int64_t valueExp, __int64_t previou
 	int operatorEnt, int operatorExp, int operatorMan, 
 	int PMapIs1){
 
-	__int64_t delta = 0, base = 0;
-
 	if(operatorEnt != NONEOPERATOR || (operatorExp == NONEOPERATOR && operatorMan == NONEOPERATOR)){
 		int scaledNumber = 1;
 	}
@@ -864,30 +857,22 @@ float decimalOperator(float previousValue, __int64_t valueExp, __int64_t previou
 		valueExp = initialValueExp;
 	}
 
-	if(operatorMan == DELTA && !PMapIs1){ /*need to improve all these functions*/
+	if(operatorMan == DELTA){ /*need to improve all these functions*/
+		/* arquivar PMap_order, exp and/or mant and recalculate */
 		__int64_t delta = 0, base = 0;
 		delta = valueMan;
-		if(previousValue != UNDEFINED && previousValue != 0){ //assigned
+		if(previousValue != UNDEFINED && previousValue != ABSENT){ //assigned
 			base = pow(10, valueExp * -1); //recalculate de mantissa
 			base = (previousValue * base);
 			valueMan = base + delta;
 			float decimal = pow(10, valueExp);
 		}
 	}
-
-	if(valueExp == 0){
-		
-
-	}
 		
 	float decimal = pow(10, valueExp);
 	
 	return valueMan * decimal;
 }
-
-/*void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, 
-	__uint32_t PMap, unsigned int PMap_order, unsigned int PMap_length, __uint32_t noFields, __uint32_t i,
-	char* value, unsigned int operator, char* initialValue){*/
 
 void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, 
 	__uint32_t PMap, int PMap_length, int PMap_order,
@@ -910,9 +895,6 @@ void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length,
 		__uint8_t* pt_streamValue = getField(streamField, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 0);
 		strcpy(streamValue, pt_streamValue); //get the stream value
 	}
-	/*else{
-		*streamValue = 0x80; //stream value is absent
-	}*/
 
 	strcpy(streamValue, bytetoStringDecoder(streamValue)); //decode the stream value
 
@@ -933,9 +915,6 @@ void stringOperator(char* value, char* streamValue, char* previousValue, char* i
     else if(operator == COPY && !PMapIs1){ //there is operator and is COPY
 		if(strcmp(previousValue, "UNDEFINED") != 0 && strcmp(previousValue, "EMPTY") != 0){ //assigned
 			strcpy(auxValue, previousValue); //the value of the field is the previous value
-			/*printf("\n\n here ");
-			printf("\n %s ", auxValue);
-			printf("\n %s ", previousValue);*/
 		}
 		else if(strcmp(previousValue, "UNDEFINED") == 0){ //undefined 
 			strcpy(auxValue, initialValue); //the value of the field is the initial value
@@ -1111,11 +1090,8 @@ char* bytetoStringDecoder(__uint8_t* field){
 	__int32_t field_length = fieldLength(field);
 	char result[field_length], aux;
 
-	/*if(field_length == 1)
-		field_length = 2;*/
-
-	//if the bitmap is 0, the value is 0x00, if the field hasnt bit(optional), the value is 0x80
-	if(*field == 0x00 || *field == 0x80){ 
+	
+	if(*field == 0x00 || *field == 0x80){ //if the bmap is 0, the value = 0x00, if the field hasnt bit(optional), value: 0x80
 		strcpy(result, "EMPTY");
 	}
 	else{
