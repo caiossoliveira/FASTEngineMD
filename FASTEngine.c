@@ -790,6 +790,8 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 	float previousValue, int operator, 
 	int expOperator, int mantOperator, __int32_t initialExp){
 
+	/* arquivar PMap_order, exp and/or mant */
+
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
     __uint8_t streamValue[1500];
 
@@ -827,10 +829,16 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 	}
 	else{ //if the bit is 0, default exp = initialExp
 		exp = -80;
+
 		if(initialExp != 0){ 
 			//exp = initialExp; //change to the operator function // so there is no exp, then is no exp in the msg, so the default is -2
 			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); //get the mantissa
 			mant = bytetoInt64Decoder(ptrMant); //decode the mantissa
+
+			int size = fieldLength(ptrMant);
+			size = (size * 8) - size; //- size because of the end bits
+
+			mant = twosComplement(mant, size);
 		}
 	}
 
@@ -857,9 +865,12 @@ float decimalOperator(float previousValue, __int64_t valueExp, __int64_t previou
 	}
 
 	if(operatorMan == DELTA && !PMapIs1){ /*need to improve all these functions*/
+		__int64_t delta = 0, base = 0;
+		delta = valueMan;
 		if(previousValue != UNDEFINED && previousValue != 0){ //assigned
-			base = pow(10, valueExp * -1); //recaucalculate de mantissa
-			valueMan = (previousValue * base);
+			base = pow(10, valueExp * -1); //recalculate de mantissa
+			base = (previousValue * base);
+			valueMan = base + delta;
 			float decimal = pow(10, valueExp);
 		}
 	}
