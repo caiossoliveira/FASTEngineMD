@@ -2,7 +2,6 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
-/*#include "t145toFIXFile.h"*/
 
 #define NONEOPERATOR 0
 #define DEFAULT 1
@@ -14,7 +13,12 @@
 #define MANDATORY 0
 
 #define UNDEFINED -90
-#define ABSENT 0xF0000000 //biggest negative number
+#define ABSENT_32 0x80000000 //biggest 32 bits negative number
+#define ABSENT_64 0x8000000000000000 //biggest 64 bits negative number
+
+#define PRINTI(file, var) {printf(file, var);}
+#define PRINTD(file, var) {printf(file, var);}
+#define PRINTS(file, var) {printf(file, var);}
  
 FILE* openFile(char* fileName);
 void readMessage(FILE* file);
@@ -29,20 +33,22 @@ void MD145Handler(__uint32_t* MDUpdateAction, char (*MDEntryType)[1500], __uint3
 	__uint64_t* SecurityID, __uint32_t* MDEntryTime, float* MDEntryPx, __uint64_t* MDEntrySize);
 
 void t145toFIX(
-	__uint32_t MsgSeqNum, __uint32_t TradeDate, __uint64_t SendintTime, __uint32_t NoMDEntries, __uint32_t MDEntriesSequence_PMap,
-	__uint32_t MDEntriesSequence_PMap_length, __uint32_t* MDUpdateAction, __uint32_t* RptSeq, __uint32_t* NumberOfOrders, 
-	__uint32_t* MDEntryTime, __uint32_t* MDEntryDate, __uint32_t* MDInsertDate, __uint32_t* MDInsertTime, __uint32_t* SellerDays,
-	__uint32_t* TradingSessionID, __uint32_t* OpenCloseSettlFlag, __uint32_t* MDEntryPositionNo, __uint32_t* SettPriceType, 
-	__uint32_t* LastTradeDate, __uint32_t* PriceAdjustmentMethod, __uint32_t* PriceLimitType, 
-	__uint32_t* PriceBandMidpointPriceType, __uint64_t* SecurityID, __uint64_t* MDEntrySize, __uint64_t* TradeVolume, 
-	__uint64_t* AvgDailyTradedQty, __uint64_t* ExpireDate, __uint64_t* EarlyTermination, __uint64_t* MaxTradeVol, 
-	char (*MDEntryType)[1500], char (*QuoteCondition)[1500], char (*PriceType)[1500], char (*MDStreamID)[1500], 
-	char (*Currency)[1500], char (*TickDirection)[1500], char (*TradeCondition)[1500], char (*OrderID)[1500], 
-	char (*TradeID)[1500], char (*MDEntryBuyer)[1500], char (*MDEntrySeller)[1500], char (*PriceBandType)[1500], float* MDEntryPx,
-	float* MDEntryInterestRate, float* NetChgPrevDay, float* LowLimitPrice, float* HighLimitPrice, float* TradingReferencePrice,
-	__uint32_t NoUnderlyings, __uint32_t UnderlyingPXType, __uint64_t UnderlyingSecurityID, __uint64_t* IndexSeq, 
-	float UnderlyingPx
+	__uint32_t MsgSeqNum, __uint32_t TradeDate, __uint64_t SendintTime, __uint32_t NoMDEntries, 
+	__uint32_t MDEntriesSequence_PMap, __uint32_t MDEntriesSequence_PMap_length, __uint32_t* MDUpdateAction, 
+	__uint32_t* RptSeq, __uint32_t* NumberOfOrders, __uint32_t* MDEntryTime, __uint32_t* MDEntryDate, __uint32_t* MDInsertDate, 
+	__uint32_t* MDInsertTime, __uint32_t* SellerDays, __uint32_t* TradingSessionID, __uint32_t* OpenCloseSettlFlag, 
+	__uint32_t* MDEntryPositionNo, __uint32_t* SettPriceType, __uint32_t* LastTradeDate, __uint32_t* PriceAdjustmentMethod, 
+	__uint32_t* PriceLimitType, __uint32_t* PriceBandMidpointPriceType, __uint64_t* SecurityID, __uint64_t* MDEntrySize, 
+	__uint64_t* TradeVolume, __uint64_t* AvgDailyTradedQty, __uint64_t* ExpireDate, __uint64_t* EarlyTermination, 
+	__uint64_t* MaxTradeVol, char (*MDEntryType)[1500], char (*QuoteCondition)[1500], char (*PriceType)[1500], 
+	char (*MDStreamID)[1500], char (*Currency)[1500], char (*TickDirection)[1500], char (*TradeCondition)[1500], 
+	char (*OrderID)[1500], char (*TradeID)[1500], char (*MDEntryBuyer)[1500], char (*MDEntrySeller)[1500], 
+	char (*PriceBandType)[1500], float* MDEntryPx, float* MDEntryInterestRate, float* NetChgPrevDay, float* LowLimitPrice, 
+	float* HighLimitPrice, float* TradingReferencePrice, __uint32_t NoUnderlyings, __uint32_t UnderlyingPXType, 
+	__uint64_t UnderlyingSecurityID, __uint64_t* IndexSeq, float UnderlyingPx
 );
+
+void t144toFIX(__uint32_t MsgSeqNum, __uint64_t SendingTime);
 
 void printBook();
 
@@ -111,8 +117,8 @@ void printBook(){
 	printf("   SecurityID: %ld \n", globalSecurityID);
 	if(levels == 1){
 		printf("    -TOB--------------------------------\n");
-		printf("     Best offer: %.2f \n", book[0]);
-		printf("     Best bid: %.2f \n\n\n", book[5]);
+		printf("     Best offer: %.2f \n", book[0]); //best option to buy
+		printf("     Best bid: %.2f \n\n\n", book[5]); //best option to sell
 	}
 }
 
@@ -443,7 +449,7 @@ void MDHeartbeat_144(__uint8_t* FASTMessage, int FASTMessage_length){
 			field_length = 0;
     	}
     }
-    //t144toFIX(MsgSeqNum, SendingTime);
+    t144toFIX(MsgSeqNum, SendingTime);
 }
 
 void MD145Handler(__uint32_t* MDUpdateAction, char (*MDEntryType)[1500], __uint32_t* RptSeq, char (*QuoteCondition)[1500], 
@@ -521,7 +527,7 @@ void readMessage(FILE* file){
 	int CurrentChunk = 0;
 	int MsgLength = 0;
 
-	for(int i = 0; i < 1250; i++){ // number of messages //1250
+	for(int i = 0; i < 1500; i++){ // number of messages //1250
 	//while(1){
 		for(int i = 0; i < 10; i++){ //read header
 			if(fread(&byte, 1, 1, file) > 0){
@@ -545,7 +551,7 @@ void readMessage(FILE* file){
 		}
 
 		//to compare with the onix log
-		if(MsgSeqNum > 731952 && MsgSeqNum < 732034){ //731915){ //only to compare with the FIX log
+		if(MsgSeqNum > 731915 && MsgSeqNum < 732049){ //731915){ //just to compare with the FIX log
 			printf("\n-----------------------------------------------------------------------------------------------------\n");
 			//printf(" \n Message %d: \n", i+1);
 			//printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n", MsgSeqNum, 
@@ -588,7 +594,7 @@ __uint32_t getField32UI(__uint8_t** FASTMessage, int FASTMessage_length,
 		value--; //If an integer is nullable, every non-negative integer is incremented by 1 before it is encoded
 	}
 	else if(isNullable(isOptional, operator) && value == 0){ //added now
-		value = ABSENT; //the value is absent
+		value = ABSENT_32; //the value is absent
 	}
 
 	return value;
@@ -597,39 +603,39 @@ __uint32_t getField32UI(__uint8_t** FASTMessage, int FASTMessage_length,
 __uint32_t uint32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t initialValue, 
 	int operator, int PMapIs1){
 	
-	if(operator == COPY && !PMapIs1){ //if the value isnt present in the stream, bcs if y the value in the stream = the new value
-		if(previousValue != UNDEFINED && previousValue != ABSENT){ //assigned
+	if(operator == COPY && !PMapIs1){ //if the value isnt present in stream, bcs if y the value in the stream = the new value
+		if(previousValue != UNDEFINED && previousValue != ABSENT_32){ //assigned
 			value = previousValue; //the value of the field is the previous value
 		}
 		else if(previousValue == UNDEFINED){
 			value = initialValue; //the value of the field is the initial value
 		}
-		else if(previousValue == ABSENT){ //EMPTY
-			value = ABSENT; // 0;
+		else if(previousValue == ABSENT_32){ //EMPTY
+			value = ABSENT_32; // 0;
 		}
     }
     else if(operator == INCREMENT && !PMapIs1){
-		if(previousValue != UNDEFINED && previousValue !=  ABSENT){ //assigned
+		if(previousValue != UNDEFINED && previousValue !=  ABSENT_32){ //assigned
 			value = previousValue + 1; //the value of the field is the previous value +1
 		}
 		else if(previousValue == UNDEFINED){ //undefined 
 			value = initialValue; //the value of the field is the initial value
 		}
-		else if(previousValue == ABSENT){ //EMPTY
-			value = ABSENT; 
+		else if(previousValue == ABSENT_32){ //EMPTY
+			value = ABSENT_32; 
 		}
     }
     else if(operator == DELTA){
     	__int64_t delta = 0, base = 0;
     	delta = value; //the delta is present in the stream
-    	if(previousValue != UNDEFINED && previousValue != ABSENT){ //} 0){ //assigned
+    	if(previousValue != UNDEFINED && previousValue != ABSENT_32){ //} 0){ //assigned
 			base = previousValue;
 		}
 		else if(previousValue == UNDEFINED){ //undefined 
 			base = initialValue; //the value of the field is the initial value
 		}
-		else if(previousValue == ABSENT){ //EMPTY
-			value = ABSENT; 
+		else if(previousValue == ABSENT_32){ //EMPTY
+			value = ABSENT_32; 
 		}
     	value = base + delta;
     }
@@ -671,7 +677,7 @@ __uint64_t getField64UI(__uint8_t** FASTMessage, int FASTMessage_length,
 		value--; //If an integer is nullable, every non-negative int is incremented by 1 before it is encoded
 	}
 	else if(isNullable(isOptional, operator) && value == 0){ 
-		value = ABSENT; 
+		value = ABSENT_32; 
 	}
 
 	return value;
@@ -682,37 +688,37 @@ __uint64_t uint64Operator(__uint64_t value, __uint64_t previousValue, __uint64_t
 
 	//if the value isnt present in the stream, bcs if yes the value in the stream is the new value
 	if(operator == COPY && !PMapIs1){ 
-		if(previousValue != UNDEFINED && previousValue != ABSENT){ //assigned
+		if(previousValue != UNDEFINED && previousValue != ABSENT_64){ //assigned
 			value = previousValue; //the value of the field is the previous value
 		}
 		else if(previousValue == UNDEFINED){ //undefined 
 			value = initialValue; //the value of the field is the initial value
 		}
-		else if(previousValue == ABSENT){ //EMPTY
-			value = ABSENT; 
+		else if(previousValue == ABSENT_64){ //EMPTY
+			value = ABSENT_64; 
 		}
     }
     else if(operator == INCREMENT && !PMapIs1){
-		if(previousValue != UNDEFINED && previousValue != ABSENT){ //assigned
+		if(previousValue != UNDEFINED && previousValue != ABSENT_64){ //assigned
 			value++; //the value of the field is the previous value +1
 		}
 		else if(previousValue == UNDEFINED){ //undefined 
 			value = initialValue; //the value of the field is the initial value
 		}
-		else if(previousValue == ABSENT){ //EMPTY
-			value = ABSENT; // 0;
+		else if(previousValue == ABSENT_64){ //EMPTY
+			value = ABSENT_64; // 0;
 		}
     }
     else if(operator == DELTA){
 		__int64_t delta = 0, base = 0;
     	delta = value; //a delta value is present in the stream
-		if(previousValue != UNDEFINED && previousValue != ABSENT){ //assigned
+		if(previousValue != UNDEFINED && previousValue != ABSENT_64){ //assigned
 			base = previousValue;
 		}
 		else if(previousValue == UNDEFINED){ //undefined 
 			base = initialValue; //the value of the field is the initial value
 		}
-		else if(previousValue == ABSENT){ //EMPTY
+		else if(previousValue == ABSENT_64){ //EMPTY
 			value = 0;
 		}
     	value = base + delta;
@@ -759,7 +765,7 @@ __int64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length,
 		value--; //If an integer is nullable, every non-negative int is incremented by 1 before it is encoded
 	}
 	else if(isNullable(isOptional, operator) && value == 0x00){ //added now
-		value = ABSENT; 
+		value = ABSENT_64; 
 	}
 
 	return value;
@@ -769,14 +775,14 @@ __int64_t int64Operator(__int64_t value, __int64_t previousValue, __int64_t init
 	int PMapIs1){
 
 	if(operator == COPY && !PMapIs1){  //value is not present in the stream, otherwise the stream value is the new value
-		if(previousValue != UNDEFINED && previousValue != ABSENT){ //assigned
+		if(previousValue != UNDEFINED && previousValue != ABSENT_64){ //assigned
 			value = previousValue; //the value of the field is the previous value
 		}
 		else if(previousValue == UNDEFINED){ //undefined 
 			value = initialValue; //the value of the field is the initial value
 		}
-		else if(previousValue == ABSENT){ //EMPTY
-			value = ABSENT;
+		else if(previousValue == ABSENT_64){ //EMPTY
+			value = ABSENT_64;
 		}
     }
     else if(operator == INCREMENT && !PMapIs1){
@@ -787,20 +793,20 @@ __int64_t int64Operator(__int64_t value, __int64_t previousValue, __int64_t init
 			value = initialValue; //the value of the field is the initial value
 		}
 		else if(previousValue == 0){ //EMPTY
-			value = ABSENT;
+			value = ABSENT_64;
 		}
     }
     else if(operator == DELTA){
 		__int64_t delta = 0, base = 0;
     	delta = value; //a delta value is present in the stream
-		if(previousValue != UNDEFINED && previousValue != ABSENT){ //assigned (think about a null code)
+		if(previousValue != UNDEFINED && previousValue != ABSENT_64){ //assigned (think about a null code)
 			base = previousValue;
 		}
 		else if(previousValue == UNDEFINED){ //undefined 
 			base = initialValue; //the value of the field is the initial value
 		}
-		else if(previousValue == ABSENT){ //EMPTY
-			value = ABSENT;
+		else if(previousValue == ABSENT_64){ //EMPTY
+			value = ABSENT_64;
 		}
     	value = base + delta;
     }
@@ -833,7 +839,7 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 		}
 	}
 
-	if(thereIsPMap && PMapIs1){ //If set, the value appears in the stream in a nullable representation. There's a exp in the msg
+	if(thereIsPMap && PMapIs1){ //If set, the value appears in stream in a nullable representation. There's a exp in the msg
 		ptrExp = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); 
 		if(*ptrExp != 0x80){ //if it is non null
 			exp = bytetoInt32Decoder(ptrExp); //decode the exp
@@ -847,7 +853,7 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 			else{
 				exp-= 1; //nullable -1
 			}
-			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); //get the mantissa
+			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); //get the mant
 			mant = bytetoInt64Decoder(ptrMant); 
 		}
 	}
@@ -855,7 +861,7 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 		exp = -80;
 
 		if(initialExp != 0){ 
-			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); //get the mantissa
+			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); //get the mant
 			mant = bytetoInt64Decoder(ptrMant); //decode the mantissa
 
 			int size = fieldLength(ptrMant);
@@ -887,7 +893,7 @@ float decimalOperator(float previousValue, __int64_t valueExp, __int64_t previou
 		/* arquivar PMap_order, exp and/or mant and recalculate */
 		__int64_t delta = 0, base = 0;
 		delta = valueMan;
-		if(previousValue != UNDEFINED && previousValue != ABSENT){ //assigned
+		if(previousValue != UNDEFINED && previousValue != ABSENT_64){ //assigned
 			base = pow(10, valueExp * -1); //recalculate de mantissa
 			base = (previousValue * base);
 			valueMan = base + delta;
@@ -1166,35 +1172,58 @@ FILE* openFile(char* fileName) {
    return file;
 }
 
+void t144toFIX(__uint32_t MsgSeqNum, __uint64_t SendingTime){
+	char buff[1500];
+	strcpy(buff, "");
+	FILE *file;
+
+	file = fopen("validation/logFIX51-FASTEngineMD.txt", "a");
+
+	char* ApplVerID = "9";
+	char* MsgType = "0";
+	int SecurityIDSource = 8;
+	char* SecurityExchange = "BVMF";
+
+	//template
+	prints("1128=%s|", ApplVerID, buff);
+	prints("35=%s|", MsgType, buff);
+	print32ui("34=%d|", MsgSeqNum, buff);
+	print64ui("52=%ld|", SendingTime, buff);
+
+	printf("\n");
+
+	strcat(buff, "\n");
+
+	fputs(buff, file);
+	fclose(file);
+	
+}
+
 void t145toFIX(
 	//Template
-	__uint32_t MsgSeqNum, __uint32_t TradeDate, __uint64_t SendintTime,
+	__uint32_t MsgSeqNum, __uint32_t TradeDate, __uint64_t SendingTime,
 	//SequenceMDEntries
-	__uint32_t NoMDEntries, __uint32_t MDEntriesSequence_PMap, __uint32_t MDEntriesSequence_PMap_length, __uint32_t* MDUpdateAction,
-	__uint32_t* RptSeq, __uint32_t* NumberOfOrders, __uint32_t* MDEntryTime, __uint32_t* MDEntryDate, __uint32_t* MDInsertDate,
-	__uint32_t* MDInsertTime, __uint32_t* SellerDays, __uint32_t* TradingSessionID, __uint32_t* OpenCloseSettlFlag, 
-	__uint32_t* MDEntryPositionNo, __uint32_t* SettPriceType, __uint32_t* LastTradeDate, __uint32_t* PriceAdjustmentMethod,
-	__uint32_t* PriceLimitType, __uint32_t* PriceBandMidpointPriceType,
-	__uint64_t* SecurityID, __uint64_t* MDEntrySize, __uint64_t* TradeVolume, __uint64_t* AvgDailyTradedQty, 
-	__uint64_t* ExpireDate, __uint64_t* EarlyTermination, __uint64_t* MaxTradeVol,
-	char (*MDEntryType)[1500], char (*QuoteCondition)[1500], char (*PriceType)[1500], char (*MDStreamID)[1500], char (*Currency)[1500], 
-	char (*TickDirection)[1500], char (*TradeCondition)[1500], char (*OrderID)[1500], char (*TradeID)[1500],
-	char (*MDEntryBuyer)[1500], char (*MDEntrySeller)[1500], char (*PriceBandType)[1500], 
+	__uint32_t NoMDEntries, __uint32_t MDEntriesSequence_PMap, __uint32_t MDEntriesSequence_PMap_length, 
+	__uint32_t* MDUpdateAction, __uint32_t* RptSeq, __uint32_t* NumberOfOrders, __uint32_t* MDEntryTime, 
+	__uint32_t* MDEntryDate, __uint32_t* MDInsertDate, __uint32_t* MDInsertTime, __uint32_t* SellerDays, 
+	__uint32_t* TradingSessionID, __uint32_t* OpenCloseSettlFlag, __uint32_t* MDEntryPositionNo, __uint32_t* SettPriceType, 
+	__uint32_t* LastTradeDate, __uint32_t* PriceAdjustmentMethod, __uint32_t* PriceLimitType, 
+	__uint32_t* PriceBandMidpointPriceType, __uint64_t* SecurityID, __uint64_t* MDEntrySize, __uint64_t* TradeVolume, 
+	__uint64_t* AvgDailyTradedQty, __uint64_t* ExpireDate, __uint64_t* EarlyTermination, __uint64_t* MaxTradeVol, 
+	char (*MDEntryType)[1500], char (*QuoteCondition)[1500], char (*PriceType)[1500], char (*MDStreamID)[1500], 
+	char (*Currency)[1500], char (*TickDirection)[1500], char (*TradeCondition)[1500], char (*OrderID)[1500], 
+	char (*TradeID)[1500], char (*MDEntryBuyer)[1500], char (*MDEntrySeller)[1500], char (*PriceBandType)[1500], 
 	float* MDEntryPx, float* MDEntryInterestRate, float* NetChgPrevDay, float* LowLimitPrice, float* HighLimitPrice, 
 	float* TradingReferencePrice,
 	//SequenceUnderlyings
 	__uint32_t NoUnderlyings, __uint32_t UnderlyingPXType, __uint64_t UnderlyingSecurityID, __uint64_t* IndexSeq,
 	float UnderlyingPx
 ){
-	#define PRINTI(file, var) { printf(file, var); }//if(var != -80) printi(file, var, buff);}	//print for int 
-	#define PRINTD(file, var) { printf(file, var); }//if(var > 0.00) printd(file, var, buff);}	//print for decimals
-	#define PRINTS(file, var) { printf(file, var); }//if(strcmp(var, "EMPTY") != 0); prints(file, var, buff);}	//(different of NULL) print for strings
 
-	char buff[7000];
+	char buff[1500];
 	strcpy(buff, "");
 	FILE *file;
 
-	//file = fopen("../validate-FASTEngineMD/logFIX51-FASTEngineMD.txt", "a"); //writing in appending mode
 	file = fopen("validation/logFIX51-FASTEngineMD.txt", "a");
 
 	char* ApplVerID = "9";
@@ -1206,7 +1235,7 @@ void t145toFIX(
 	prints("1128=%s|", ApplVerID, buff);
 	prints("35=%s|", MsgType, buff);
 	print32ui("34=%d|", MsgSeqNum, buff);
-	print64ui("52=%ld|", SendintTime, buff);
+	print64ui("52=%ld|", SendingTime, buff);
 	print32ui("75=%d|", TradeDate, buff);
 
 	//SequenceMDEntries
@@ -1276,16 +1305,16 @@ void t145toFIX(
 
 void print64ui(char* text, __uint64_t var, char* buff){
 	if((int) var > 0){
-		char auxBuff[150];
+		char auxBuff[1500];
 		sprintf(auxBuff, text, var);
 		strcat(buff, auxBuff);
 		PRINTI(text, var);
 	}
 }
 
-void print64i(char* text, __int64_t var, char* buff){
-	if((int) var != 0xF0000000){ //biggest 32bits negative number
-		char auxBuff[150];
+void print64i(char* text, __int64_t var, char* buff){ 
+	if(var != ABSENT_64){ //(int) //0xF0000000){ //biggest 32bits negative number
+		char auxBuff[1500];
 		sprintf(auxBuff, text, var);
 		strcat(buff, auxBuff);
 		PRINTI(text, var);
@@ -1294,7 +1323,7 @@ void print64i(char* text, __int64_t var, char* buff){
 
 void print32ui(char* text, __uint32_t var, char* buff){
 	if((int) var >= 0){
-		char auxBuff[150];
+		char auxBuff[1500];
 		sprintf(auxBuff, text, var);
 		strcat(buff, auxBuff);
 		PRINTI(text, var);
@@ -1303,7 +1332,7 @@ void print32ui(char* text, __uint32_t var, char* buff){
 
 void printvs(char* text, char (*var)[1500], char* buff){
 	if(strcmp(var[0], "EMPTY") != 0 && var[0][0] != '\0'){
-		char auxBuff[150];
+		char auxBuff[1500];
 		sprintf(auxBuff, text, var[0]);
 		strcat(buff, auxBuff);
 		PRINTS(text, var);
@@ -1312,7 +1341,7 @@ void printvs(char* text, char (*var)[1500], char* buff){
 
 void prints(char* text, char* var, char* buff){ 
 	if(strcmp(var, "EMPTY") != 0 && *var != '\0'){
-		char auxBuff[150];
+		char auxBuff[1500];
 		sprintf(auxBuff, text, var);
 		strcat(buff, auxBuff);
 		PRINTS(text, var);
@@ -1321,7 +1350,7 @@ void prints(char* text, char* var, char* buff){
 
 void printd(char* text, float var, char* buff){
 	if(var > 0.00){
-		char auxBuff[150];
+		char auxBuff[1500];
 		sprintf(auxBuff, text, var);
 		strcat(buff, auxBuff);
 		PRINTD(text, var);

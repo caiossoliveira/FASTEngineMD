@@ -1,6 +1,6 @@
 import os
 
-b3Log = "fixtestlogb3.txt"
+b3Log = "fixtestlogb3-3.txt"
 myLog = "logFIX51-FASTEngineMD.txt"
 
 fixlogb3 = open(b3Log, "r") #open the file
