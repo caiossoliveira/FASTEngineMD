@@ -4,7 +4,7 @@ void print64i(char* text, __int64_t var, char* buff);
 void print64ui(char* text, __uint64_t var, char* buff);
 void print32ui(char* text, __uint32_t var, char* buff);
 void prints(char* text, char* var, char* buff);
-void printvs(char* text, char (*var)[1000], char* buff);
+void printvs(char* text, char (*var)[1500], char* buff);
 void printd(char* text, float var, char* buff);
 
 void t145toFIX(
@@ -18,9 +18,9 @@ void t145toFIX(
 	__uint32_t* PriceLimitType, __uint32_t* PriceBandMidpointPriceType,
 	__uint64_t* SecurityID, __uint64_t* MDEntrySize, __uint64_t* TradeVolume, __uint64_t* AvgDailyTradedQty, 
 	__uint64_t* ExpireDate, __uint64_t* EarlyTermination, __uint64_t* MaxTradeVol,
-	char (*MDEntryType)[1000], char (*QuoteCondition)[1000], char (*PriceType)[1000], char (*MDStreamID)[1000], char (*Currency)[1000], 
-	char (*TickDirection)[1000], char (*TradeCondition)[1000], char (*OrderID)[1000], char (*TradeID)[1000],
-	char (*MDEntryBuyer)[1000], char (*MDEntrySeller)[1000], char (*PriceBandType)[1000], 
+	char (*MDEntryType)[1500], char (*QuoteCondition)[1500], char (*PriceType)[1500], char (*MDStreamID)[1500], char (*Currency)[1500], 
+	char (*TickDirection)[1500], char (*TradeCondition)[1500], char (*OrderID)[1500], char (*TradeID)[1500],
+	char (*MDEntryBuyer)[1500], char (*MDEntrySeller)[1500], char (*PriceBandType)[1500], 
 	float* MDEntryPx, float* MDEntryInterestRate, float* NetChgPrevDay, float* LowLimitPrice, float* HighLimitPrice, 
 	float* TradingReferencePrice,
 	//SequenceUnderlyings
@@ -142,7 +142,7 @@ void print32ui(char* text, __uint32_t var, char* buff){
 	}
 }
 
-void printvs(char* text, char (*var)[1000], char* buff){
+void printvs(char* text, char (*var)[1500], char* buff){
 	if(strcmp(var[0], "EMPTY") != 0 && var[0][0] != '\0'){
 		char auxBuff[150];
 		sprintf(auxBuff, text, var[0]);

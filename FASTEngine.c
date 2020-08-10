@@ -3,6 +3,18 @@
 #include <math.h>
 #include <stdlib.h>
 #include "t145toFIXFile.h"
+
+#define NONEOPERATOR 0
+#define DEFAULT 1
+#define COPY 2
+#define INCREMENT 3
+#define DELTA 4
+
+#define OPTIONAL 1
+#define MANDATORY 0
+
+#define UNDEFINED -90
+#define ABSENT 0xF0000000 //biggest negative number
  
 FILE* openFile(char* fileName);
 void readMessage(FILE* file);
@@ -13,8 +25,10 @@ void templateDecoder(__uint16_t TemplateID, __uint32_t PMap,
 void MDHeartbeat_144(__uint8_t* FASTMessage, int FASTMessage_length);
 void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_length);
 
-void MD145Handler(__uint32_t MDUpdateAction, char* MDEntryType, __uint32_t RptSeq, char* QuoteCondition, 
-	__uint64_t SecurityID, __uint32_t MDEntryTime, float MDEntryPx, __uint64_t MDEntrySize);
+void MD145Handler(__uint32_t* MDUpdateAction, char (*MDEntryType)[1500], __uint32_t* RptSeq, char (*QuoteCondition)[1500], 
+	__uint64_t* SecurityID, __uint32_t* MDEntryTime, float* MDEntryPx, __uint64_t* MDEntrySize);
+
+void printBook();
 
 __uint32_t getField32UI(__uint8_t** FASTMessage, int FASTMessage_length, 
 	__uint32_t PMap, int PMap_length, int PMap_order,
@@ -32,9 +46,9 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 	__uint32_t PMap, int PMap_length, int PMap_order,
 	float previousValue, int operator, 
 	int expOperator, int mantOperator, __int32_t initialExp);
-
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, 
 	__uint32_t PMap, int PMap_length, int PMap_order, int isDecimal);
+	
 __uint64_t uint64Operator(__uint64_t value, __uint64_t previousValue, __uint64_t initialValue, int operator, 
 	int PMapis1);
 __int64_t int64Operator(__int64_t value, __int64_t previousValue, __int64_t initialValue, int operator, 
@@ -65,62 +79,51 @@ int levels = 1;
 
 int main () {
 	readMessage(openFile("51_Inc_FAST.bin"));
-	//test();
+	printBook();
+    return 0;
+}
 
-	/*printf("\n --Book----------------------------------- \n");
+void printBook(){
+	printf("\n --Book----------------------------------- \n");
 	printf("   SecurityID: %ld \n", globalSecurityID);
 	if(levels == 1){
 		printf("    -TOB--------------------------------\n");
 		printf("     Best offer: %.2f \n", book[0]);
 		printf("     Best bid: %.2f \n\n\n", book[5]);
-	}*/
-
-    return 0;
+	}
 }
 
 void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_length){
-	#define NONEBITMAP 0
+	#define NONEBITMAP_145 0
 	#define MDUPDATEACTION 1
 	#define MDENTRYTYPE 2
-	#define SECURITYID 3
-	#define RPTSEQ 4
-	#define QUOTECONDITION 5
-	#define MDENTRYPX 6
-	#define MDENTRYINTERESTRATE 7
-	#define	NUMBEROFORDERS 8
-	#define MDENTRYTIME 9
-	#define MDENTRYDATE 10
-	#define MDINSERTDATE 11
-	#define MDINSERTTIME 12
-	#define MDSTREAMID 13
-	#define CURRENCY 14
-	#define NETCHGPREVDAY 15
-	#define SELLERDAYS 16
-	#define TICKDIRECTION 17
-	#define ORDERID 18
-	#define TRADEID 19
-	#define MDENTRYBUYER 20
-	#define MDENTRYSELLER 21
-	#define MDENTRYPOSITIONNO 22
-	#define PRICEBANDTYPE 23
-	#define PRICELIMITTYPE 24
-	#define LOWLIMITPRICE 25
-	#define HIGHLIMITPRICE 26
-	#define TRADINGREFERENCEPRICE 27
+	#define SECURITYID_145 3
+	#define RPTSEQ_145 4
+	#define QUOTECONDITION_145 5
+	#define MDENTRYPX_145 6
+	#define MDENTRYINTERESTRATE_145 7
+	#define	NUMBEROFORDERS_145 8
+	#define MDENTRYTIME_145 9
+	#define MDENTRYDATE_145 10
+	#define MDINSERTDATE_145 11
+	#define MDINSERTTIME_145 12
+	#define MDSTREAMID_145 13
+	#define CURRENCY_145 14
+	#define NETCHGPREVDAY_145 15
+	#define SELLERDAYS_145 16
+	#define TICKDIRECTION_145 17
+	#define ORDERID_145 18
+	#define TRADEID_145 19
+	#define MDENTRYBUYER_145 20
+	#define MDENTRYSELLER_145 21
+	#define MDENTRYPOSITIONNO_145 22
+	#define PRICEBANDTYPE_145 23
+	#define PRICELIMITTYPE_145 24
+	#define LOWLIMITPRICE_145 25
+	#define HIGHLIMITPRICE_145 26
+	#define TRADINGREFERENCEPRICE_145 27
 
-	#define UNDERLYINGPXTYPE 1
-
-	#define NONEOPERATOR 0
-	#define DEFAULT 1
-	#define COPY 2
-	#define INCREMENT 3
-	#define DELTA 4
-
-	#define OPTIONAL 1
-	#define MANDATORY 0
-
-	#define UNDEFINED -90
-	#define ABSENT 0xF0000000 //biggest negative number
+	#define UNDERLYINGPXTYPE_145 1
 
 	__uint8_t* ptr_FASTMessage = FASTMessage+3; //MsgSeqNum is the first here but the third in the message
 	__uint8_t field[1500] = {0x80}; //FIX/FAST encoded MD is no larger than 1420 bytes including the header
@@ -140,18 +143,18 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 	__uint32_t MDEntryDate[10] = {UNDEFINED}, MDInsertDate[10] = {UNDEFINED}, MDInsertTime[10] = {UNDEFINED};
 	__uint64_t SecurityID[10] = {0}, TradeVolume[10] = {0};
 	__int64_t MDEntrySize[10] = {0}; //it'll need a special function for signal int bcs of the signal bit calculation
-	char MDEntryType[10][1000] = {"UNDEFINED"};
-	char QuoteCondition[10][1000] = {"UNDEFINED"};
-	char PriceType[10][1000] = {"UNDEFINED"}; //change to EMPTY
-	char MDStreamID[10][1000] = {"UNDEFINED"};
-	char Currency[10][1000] = {"UNDEFINED"};
-	char TickDirection[10][1000] = {"UNDEFINED"};
-	char TradeCondition[10][1000] = {"UNDEFINED"};
-	char OrderID[10][1000] = {"UNDEFINED"};
-	char TradeID[10][1000] = {"UNDEFINED"};
-	char MDEntryBuyer[10][1000] = {"UNDEFINED"};
-	char MDEntrySeller[10][1000] = {"UNDEFINED"};
-	char PriceBandType[10][1000] = {"UNDEFINED"};
+	char MDEntryType[10][1500] = {"UNDEFINED"};
+	char QuoteCondition[10][1500] = {"UNDEFINED"};
+	char PriceType[10][1500] = {"UNDEFINED"}; //change to EMPTY
+	char MDStreamID[10][1500] = {"UNDEFINED"};
+	char Currency[10][1500] = {"UNDEFINED"};
+	char TickDirection[10][1500] = {"UNDEFINED"};
+	char TradeCondition[10][1500] = {"UNDEFINED"};
+	char OrderID[10][1500] = {"UNDEFINED"};
+	char TradeID[10][1500] = {"UNDEFINED"};
+	char MDEntryBuyer[10][1500] = {"UNDEFINED"};
+	char MDEntrySeller[10][1500] = {"UNDEFINED"};
+	char PriceBandType[10][1500] = {"UNDEFINED"};
 	float MDEntryPx[10] = {0.0}, MDEntryInterestRate[10] = {0.0}, NetChgPrevDay[10] = {0.0}, LowLimitPrice[10] = {0.0}; 
 	float HighLimitPrice[10] = {0.0}, TradingReferencePrice[10] = {0.0};
 	//SequenceUnderlyings
@@ -165,25 +168,25 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 	int initialValueI = 0;
 
 	MsgSeqNum = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-		NONEBITMAP, NONEBITMAP, NONEBITMAP, 
+		NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145, 
 		MsgSeqNum, initialValueI, MANDATORY, NONEOPERATOR);
 
 	SendintTime = getField64UI(&ptr_FASTMessage, FASTMessage_length, 
-		NONEBITMAP, NONEBITMAP,	NONEBITMAP, 
+		NONEBITMAP_145, NONEBITMAP_145,	NONEBITMAP_145, 
 		SendintTime, NONEOPERATOR, initialValueI, MANDATORY);
 
 	TradeDate = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-		NONEBITMAP, NONEBITMAP, NONEBITMAP, 
+		NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145, 
 		TradeDate, initialValueI, OPTIONAL, NONEOPERATOR); 
 
 	NoMDEntries = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-		NONEBITMAP, NONEBITMAP, NONEBITMAP, 
+		NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145, 
 		NoMDEntries, initialValueI, MANDATORY, NONEOPERATOR);
 
 	if(NoMDEntries > 0){ //sequence
 		for(int i = 0; i < NoMDEntries; i++){
 			__uint8_t* aux = getField(field, &ptr_FASTMessage, FASTMessage_length,	
-				NONEBITMAP, NONEBITMAP, NONEBITMAP, 0);
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145, 0);
 			
 			MDEntriesSequence_PMap_length = fieldLength(aux);
 			MDEntriesSequence_PMap = bytetoInt32Decoder(aux);
@@ -197,179 +200,179 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 				MDEntryType[i], MDEntryType[i != 0 ? i-1 : i], "0", COPY);
 
 			SecurityID[i] = getField64UI(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, SECURITYID,
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, SECURITYID_145,
 				SecurityID[i != 0 ? i-1 : i], initialValueI, MANDATORY, COPY);		 //decrement if i != 0
 
 			RptSeq[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, RPTSEQ, 
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, RPTSEQ_145, 
 				RptSeq[i != 0 ? i-1 : i], initialValueI, MANDATORY, INCREMENT);
 
 			getFieldS(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, QUOTECONDITION,  
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, QUOTECONDITION_145,  
 				QuoteCondition[i], QuoteCondition[i != 0 ? i-1 : i], initialValueC, NONEOPERATOR);
 
 			MDEntryPx[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYPX, 
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYPX_145, 
 				MDEntryPx[i != 0 ? i-1 : i], NONEOPERATOR, 
 				DEFAULT, DELTA, -2);
 			
 			MDEntryInterestRate[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length,
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYINTERESTRATE,
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYINTERESTRATE_145,
 				MDEntryInterestRate[i != 0 ? i-1 : i], NONEOPERATOR, 
 				DEFAULT, DELTA, -2);
 			
 			NumberOfOrders[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, NUMBEROFORDERS,
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, NUMBEROFORDERS_145,
 				NumberOfOrders[i != 0 ? i-1 : i], initialValueI, OPTIONAL, NONEOPERATOR);
 			
 			getFieldS(&ptr_FASTMessage, FASTMessage_length, 
-				NONEBITMAP, NONEBITMAP, NONEBITMAP, 
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145, 
 				PriceType[i], PriceType[i != 0 ? i-1 : i], initialValueC, NONEOPERATOR);
 
 			MDEntryTime[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYTIME,  
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYTIME_145,  
 				MDEntryTime[i != 0 ? i-1 : i], initialValueI, MANDATORY, COPY);
 
 			MDEntrySize[i] = getField64I(&ptr_FASTMessage, FASTMessage_length, 
-				NONEBITMAP, NONEBITMAP, NONEBITMAP,
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145,
 				MDEntrySize[i != 0 ? i-1 : i], initialValueI, OPTIONAL, DELTA);
 
 			MDEntryDate[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYDATE,  
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYDATE_145,  
 				MDEntryDate[i != 0 ? i-1 : i], initialValueI, OPTIONAL, COPY);
 
 			MDInsertDate[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDINSERTDATE, 
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDINSERTDATE_145, 
 				MDInsertDate[i != 0 ? i-1 : i], initialValueI, OPTIONAL, COPY);
 		
 			MDInsertTime[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDINSERTTIME, 
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDINSERTTIME_145, 
 				MDInsertTime[i != 0 ? i-1 : i], initialValueI, OPTIONAL, COPY);
 
 			getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, 
-				MDEntriesSequence_PMap_length, MDSTREAMID,  
+				MDEntriesSequence_PMap_length, MDSTREAMID_145,  
 				MDStreamID[i], MDStreamID[i != 0 ? i-1 : i], initialValueC, NONEOPERATOR);
 
 			getFieldS(&ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, 
-				MDEntriesSequence_PMap_length, CURRENCY, 
+				MDEntriesSequence_PMap_length, CURRENCY_145, 
 				Currency[i], Currency[i != 0 ? i-1 : i], initialValueC, COPY);
 			
 			NetChgPrevDay[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, NETCHGPREVDAY, 
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, NETCHGPREVDAY_145, 
 				NetChgPrevDay[i], NONEOPERATOR, 
 				DEFAULT, DELTA, 0);
 			
 			SellerDays[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, SELLERDAYS, 
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, SELLERDAYS_145, 
 				SellerDays[i], initialValueI, OPTIONAL, NONEOPERATOR);
 			
 			TradeVolume[i] = getField64UI(&ptr_FASTMessage, FASTMessage_length, 
-				NONEBITMAP, NONEBITMAP, NONEBITMAP,  
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145,  
 				TradeVolume[i != 0 ? i-1 : i], initialValueI, OPTIONAL, DELTA);
 
 			getFieldS(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, TICKDIRECTION,  
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, TICKDIRECTION_145,  
 				TickDirection[i], TickDirection[i != 0 ? i-1 : i], initialValueC, NONEOPERATOR);
 			
 			getFieldS(&ptr_FASTMessage, FASTMessage_length, 
-				NONEBITMAP, NONEBITMAP, NONEBITMAP,	 
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145,	 
 				TradeCondition[i], TradeCondition[i != 0 ? i-1 : i], initialValueC, NONEOPERATOR);
 
 			TradingSessionID[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-				NONEBITMAP, NONEBITMAP, NONEBITMAP,  
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145,  
 				TradingSessionID[i], initialValueI, OPTIONAL, NONEOPERATOR);
 			
 			OpenCloseSettlFlag[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-				NONEBITMAP, NONEBITMAP, NONEBITMAP,  
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145,  
 				OpenCloseSettlFlag[i], initialValueI, OPTIONAL, NONEOPERATOR);
 			
 			getFieldS(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, ORDERID,  
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, ORDERID_145,  
 				OrderID[i], OrderID[i != 0 ? i-1 : i], initialValueC, NONEOPERATOR);
 
 			getFieldS(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, TRADEID,  
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, TRADEID_145,  
 				TradeID[i], TradeID[i != 0 ? i-1 : i], initialValueC, NONEOPERATOR);
 
 			getFieldS(&ptr_FASTMessage, FASTMessage_length,
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYBUYER, 
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYBUYER_145, 
 				MDEntryBuyer[i], MDEntryBuyer[i != 0 ? i-1 : i], initialValueC, NONEOPERATOR);
 
 			getFieldS(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYSELLER,  
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYSELLER_145,  
 				MDEntrySeller[i], MDEntrySeller[i != 0 ? i-1 : i], initialValueC, NONEOPERATOR);
 
 			MDEntryPositionNo[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYPOSITIONNO,  
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYPOSITIONNO_145,  
 				MDEntryPositionNo[i], initialValueI, OPTIONAL, NONEOPERATOR);
 				
 			SettPriceType[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-				NONEBITMAP, NONEBITMAP, NONEBITMAP, 
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145, 
 				SettPriceType[i], initialValueI, OPTIONAL, NONEOPERATOR);
 			
 			LastTradeDate[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-				NONEBITMAP, NONEBITMAP, NONEBITMAP, 
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145, 
 				LastTradeDate[i], initialValueI, OPTIONAL, NONEOPERATOR);
 
 			PriceAdjustmentMethod[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-				NONEBITMAP, NONEBITMAP, NONEBITMAP, 
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145, 
 				PriceAdjustmentMethod[i], initialValueI, OPTIONAL, NONEOPERATOR);
 
 			getFieldS(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, PRICEBANDTYPE,
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, PRICEBANDTYPE_145,
 				PriceBandType[i], PriceBandType[i != 0 ? i-1 : i], initialValueC, NONEOPERATOR);
 
 			PriceLimitType[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, PRICELIMITTYPE, 
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, PRICELIMITTYPE_145, 
 				PriceLimitType[i], initialValueI, OPTIONAL, NONEOPERATOR);
 			
 			LowLimitPrice[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, LOWLIMITPRICE,  
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, LOWLIMITPRICE_145,  
 				LowLimitPrice[i], NONEOPERATOR, 
 				DEFAULT, DELTA, 0);
 			
 			HighLimitPrice[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, HIGHLIMITPRICE, 
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, HIGHLIMITPRICE_145, 
 				HighLimitPrice[i], NONEOPERATOR, 
 				DEFAULT, DELTA, 0);
 
 			TradingReferencePrice[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
-				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, TRADINGREFERENCEPRICE, 
+				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, TRADINGREFERENCEPRICE_145, 
 				TradingReferencePrice[i], NONEOPERATOR, 
 				DEFAULT, DELTA, 0);
 			
 			PriceBandMidpointPriceType[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-				NONEBITMAP, NONEBITMAP, NONEBITMAP,  
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145,  
 				PriceBandMidpointPriceType[i], initialValueI, OPTIONAL, NONEOPERATOR);
 			
 			AvgDailyTradedQty[i] = getField64UI(&ptr_FASTMessage, FASTMessage_length, 
-				NONEBITMAP, NONEBITMAP, NONEBITMAP,
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145,
 				AvgDailyTradedQty[i], initialValueI, OPTIONAL, NONEOPERATOR);
 			
 			ExpireDate[i] = getField64UI(&ptr_FASTMessage, FASTMessage_length, 
-				NONEBITMAP, NONEBITMAP, NONEBITMAP, 
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145, 
 				ExpireDate[i], initialValueI, OPTIONAL, NONEOPERATOR);
 			
 			EarlyTermination[i] = getField64UI(&ptr_FASTMessage, FASTMessage_length, 
-				NONEBITMAP, NONEBITMAP, NONEBITMAP,  
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145,  
 				EarlyTermination[i], initialValueI, OPTIONAL, NONEOPERATOR);
 			
 			MaxTradeVol[i] = getField64UI(&ptr_FASTMessage, FASTMessage_length, 
-				NONEBITMAP, NONEBITMAP, NONEBITMAP,  
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145,  
 				MaxTradeVol[i], initialValueI, OPTIONAL, NONEOPERATOR);
 			
 			NoUnderlyings = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
-				NONEBITMAP, NONEBITMAP, NONEBITMAP,  
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145,  
 				NoUnderlyings, initialValueI, MANDATORY, NONEOPERATOR);
 
 			if(NoUnderlyings > 0){}
 
 			IndexSeq[i] = getField64UI(&ptr_FASTMessage, FASTMessage_length, 
-				NONEBITMAP, NONEBITMAP, NONEBITMAP, 
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145, 
 				IndexSeq[i], initialValueI, OPTIONAL, NONEOPERATOR);
 		}
 	}
-	//MD145Handler(MDUpdateAction, MDEntryType, RptSeq, QuoteCondition, SecurityID, MDEntryTime, MDEntryPx, MDEntrySize);
+	MD145Handler(MDUpdateAction, MDEntryType, RptSeq, QuoteCondition, SecurityID, MDEntryTime, MDEntryPx, MDEntrySize);
 
 	t145toFIX(
 		//Template
@@ -420,17 +423,17 @@ void MDHeartbeat_144(__uint8_t* FASTMessage, int FASTMessage_length){
     //t144toFIX(MsgSeqNum, SendingTime);
 }
 
-void MD145Handler(__uint32_t MDUpdateAction, char* MDEntryType, __uint32_t RptSeq, char* QuoteCondition, 
-	__uint64_t SecurityID, __uint32_t MDEntryTime, float MDEntryPx, __uint64_t MDEntrySize){
+void MD145Handler(__uint32_t* MDUpdateAction, char (*MDEntryType)[1500], __uint32_t* RptSeq, char (*QuoteCondition)[1500], 
+	__uint64_t* SecurityID, __uint32_t* MDEntryTime, float* MDEntryPx, __uint64_t* MDEntrySize){
 
-	if(SecurityID == globalSecurityID){
-		if(MDUpdateAction == 0){ //new
+	if(*SecurityID == globalSecurityID){
+		if(*MDUpdateAction == 0){ //new
 			if(levels == 1){
-				if(*MDEntryType == '0'){ //bid
-					book[0] = MDEntryPx;
+				if(MDEntryType[0][0] == '0'){ //bid
+					book[0] = *MDEntryPx;
 				}
-				else if(*MDEntryType == '1'){ //offer
-					book[5] = MDEntryPx;
+				else if(MDEntryType[0][0] == '1'){ //offer
+					book[5] = *MDEntryPx;
 				}
 			}
 		}
