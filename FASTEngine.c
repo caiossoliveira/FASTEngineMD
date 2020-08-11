@@ -1313,7 +1313,7 @@ void print64ui(char* text, __uint64_t var, char* buff){
 }
 
 void print64i(char* text, __int64_t var, char* buff){ 
-	if(var != ABSENT_64){ //(int) //0xF0000000){ //biggest 32bits negative number
+	if(var != ABSENT_64){ //(int) //0xF0000000){ //biggest 64bits negative number
 		char auxBuff[1500];
 		sprintf(auxBuff, text, var);
 		strcat(buff, auxBuff);
