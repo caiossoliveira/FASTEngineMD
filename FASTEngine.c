@@ -2,6 +2,10 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+#include <time.h>
+
+clock_t c1 = 0, c2 = 0;
+double tempo;
 
 #define NONEOPERATOR 0
 #define DEFAULT 1
@@ -106,7 +110,24 @@ __uint64_t globalSecurityID = 3809639;
 float book[10] = {9999.0, 9999.0, 9999.0, 9999.0, 9999.0, -9999.0, -9999.0, -9999.0, -9999.0, -9999.0};
 int levels = 1;
 
+void test(){
+	clock_t c1,c2;
+	double tempo;
+
+	c1 = clock();
+
+	for(int i = 0; i < 1999999900; i++){
+		1+1;
+	}
+	c2 = clock();
+
+	tempo = (double)((c2-c1))/CLOCKS_PER_SEC;
+	printf("Perfomance: %lf \n\n", tempo);
+}
+
+
 int main () {
+	//test();
 	readMessage(openFile("51_Inc_FAST.bin"));
 	printBook();
     return 0;
@@ -123,6 +144,7 @@ void printBook(){
 }
 
 void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_length){
+	c1 = clock();
 	#define NONEBITMAP_145 0
 	#define MDUPDATEACTION 1
 	#define MDENTRYTYPE 2
@@ -401,6 +423,11 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 				IndexSeq[i], initialValueI, OPTIONAL, NONEOPERATOR);
 		}
 	}
+
+	c2 = clock();
+	tempo = (double)((c2 - c1)) / CLOCKS_PER_SEC;
+	printf("\n 145(): %lf \n\n", tempo);
+
 	MD145Handler(MDUpdateAction, MDEntryType, RptSeq, QuoteCondition, SecurityID, MDEntryTime, MDEntryPx, MDEntrySize);
 
 	t145toFIX(
@@ -421,6 +448,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 }
 
 void MDHeartbeat_144(__uint8_t* FASTMessage, int FASTMessage_length){
+	c1 = clock();
 	__uint8_t field[1500] = {0x00};
 	unsigned int field_length = 0;
 	unsigned int noTemplateField = 0;
@@ -449,6 +477,9 @@ void MDHeartbeat_144(__uint8_t* FASTMessage, int FASTMessage_length){
 			field_length = 0;
     	}
     }
+	c2 = clock();
+	tempo = (double)((c2 - c1)) / CLOCKS_PER_SEC;
+	printf("\n 144(): %lf \n\n", tempo);
     t144toFIX(MsgSeqNum, SendingTime);
 }
 
@@ -485,6 +516,7 @@ void templateDecoder(__uint16_t TemplateID, __uint32_t PMap,
 }
 
 void identifyTemplate(__uint8_t* FASTMessage, int FASTMessage_length){
+	c1 = clock();
 	__uint8_t field[1500];
     __uint32_t PMap = 0;
     __uint16_t TemplateID = 0;
@@ -507,6 +539,9 @@ void identifyTemplate(__uint8_t* FASTMessage, int FASTMessage_length){
 				TemplateID = bytetoPMapDecoder(field, field_length);
 			}
 			if(TemplateID > 0){
+				c2 = clock();
+				tempo = (double)((c2 - c1)) / CLOCKS_PER_SEC;
+	    		printf("\n identifyTemplate(): %lf \n\n", tempo);
 				templateDecoder(TemplateID, PMap, FASTMessage, FASTMessage_length);
 				break;
 			}
@@ -517,6 +552,8 @@ void identifyTemplate(__uint8_t* FASTMessage, int FASTMessage_length){
 }
 
 void readMessage(FILE* file){
+	c1 = clock();
+
 	__uint8_t header[10];
 	__uint8_t byte;
 	__uint8_t FASTMessage[1500]; //2 bytes of MsgLength is the limit
@@ -549,6 +586,11 @@ void readMessage(FILE* file){
 			FASTMessage[FASTMessage_length] = byte;
 			FASTMessage_length++;
 		}
+
+
+		c2 = clock();
+		tempo = (double)((c2 - c1)) / CLOCKS_PER_SEC;
+	    printf("\n readMessage(): %lf \n\n", tempo);
 
 		//to compare with the onix log
 		if(MsgSeqNum > 731915 && MsgSeqNum < 732049){ //731915){ //just to compare with the FIX log
@@ -1313,7 +1355,7 @@ void print64ui(char* text, __uint64_t var, char* buff){
 }
 
 void print64i(char* text, __int64_t var, char* buff){ 
-	if(var != ABSENT_64){ //(int) //0xF0000000){ //biggest 64bits negative number
+	if(var != ABSENT_64){ 
 		char auxBuff[1500];
 		sprintf(auxBuff, text, var);
 		strcat(buff, auxBuff);
