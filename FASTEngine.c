@@ -2,10 +2,13 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
-#include <time.h>
+/*#include <time.h>
 
 clock_t c1 = 0, c2 = 0;
 double tempo;
+char valuation[1500];
+FILE *fileV;
+char auxValuation[1500];*/
 
 #define NONEOPERATOR 0
 #define DEFAULT 1
@@ -48,8 +51,8 @@ void t145toFIX(
 	char (*MDStreamID)[1500], char (*Currency)[1500], char (*TickDirection)[1500], char (*TradeCondition)[1500], 
 	char (*OrderID)[1500], char (*TradeID)[1500], char (*MDEntryBuyer)[1500], char (*MDEntrySeller)[1500], 
 	char (*PriceBandType)[1500], float* MDEntryPx, float* MDEntryInterestRate, float* NetChgPrevDay, float* LowLimitPrice, 
-	float* HighLimitPrice, float* TradingReferencePrice, __uint32_t NoUnderlyings, __uint32_t UnderlyingPXType, 
-	__uint64_t UnderlyingSecurityID, __uint64_t* IndexSeq, float UnderlyingPx
+	float* HighLimitPrice, float* TradingReferencePrice, __uint32_t NoUnderlyings, __uint32_t* UnderlyingPXType, 
+	__uint64_t* UnderlyingSecurityID, __uint64_t* IndexSeq, float* UnderlyingPx
 );
 
 void t144toFIX(__uint32_t MsgSeqNum, __uint64_t SendingTime);
@@ -110,26 +113,15 @@ __uint64_t globalSecurityID = 3809639;
 float book[10] = {9999.0, 9999.0, 9999.0, 9999.0, 9999.0, -9999.0, -9999.0, -9999.0, -9999.0, -9999.0};
 int levels = 1;
 
-void test(){
-	clock_t c1,c2;
-	double tempo;
+int main () {	
 
-	c1 = clock();
+	/*strcpy(valuation, "");
+	c1 = clock();*/
 
-	for(int i = 0; i < 1999999900; i++){
-		1+1;
-	}
-	c2 = clock();
-
-	tempo = (double)((c2-c1))/CLOCKS_PER_SEC;
-	printf("Perfomance: %lf \n\n", tempo);
-}
-
-
-int main () {
-	//test();
-	readMessage(openFile("51_Inc_FAST.bin"));
+	//readMessage(openFile("51_Inc_FAST.bin"));
+	readMessage(openFile("filteredLog.bin"));
 	printBook();
+
     return 0;
 }
 
@@ -144,12 +136,11 @@ void printBook(){
 }
 
 void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_length){
-	c1 = clock();
 	#define NONEBITMAP_145 0
 	#define MDUPDATEACTION 1
 	#define MDENTRYTYPE 2
 	#define SECURITYID_145 3
-	#define RPTSEQ_145 4
+	#define RPTSEQ_145 4           
 	#define QUOTECONDITION_145 5
 	#define MDENTRYPX_145 6
 	#define MDENTRYINTERESTRATE_145 7
@@ -174,7 +165,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 	#define HIGHLIMITPRICE_145 26
 	#define TRADINGREFERENCEPRICE_145 27
 
-	#define UNDERLYINGPXTYPE_145 1
+	#define UNDERLYINGPX_145 1
 
 	__uint8_t* ptr_FASTMessage = FASTMessage+3; //MsgSeqNum is the first here but the third in the message
 	__uint8_t field[1500] = {0x80}; //FIX/FAST encoded MD is no larger than 1420 bytes including the header
@@ -193,7 +184,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 	__uint32_t MDUpdateAction[10] = {UNDEFINED}, RptSeq[10] = {UNDEFINED}, MDEntryTime[10] = {UNDEFINED}; 
 	__uint32_t MDEntryDate[10] = {UNDEFINED}, MDInsertDate[10] = {UNDEFINED}, MDInsertTime[10] = {UNDEFINED};
 	__uint64_t SecurityID[10] = {0}, TradeVolume[10] = {0};
-	__int64_t MDEntrySize[10] = {0}; //it'll need a special function for signal int bcs of the signal bit calculation
+	__int64_t MDEntrySize[10] = {0}; 
 	char MDEntryType[10][1500] = {"UNDEFINED"};
 	char QuoteCondition[10][1500] = {"UNDEFINED"};
 	char PriceType[10][1500] = {"UNDEFINED"}; //change to EMPTY
@@ -209,9 +200,10 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 	float MDEntryPx[10] = {0.0}, MDEntryInterestRate[10] = {0.0}, NetChgPrevDay[10] = {0.0}, LowLimitPrice[10] = {0.0}; 
 	float HighLimitPrice[10] = {0.0}, TradingReferencePrice[10] = {0.0};
 	//SequenceUnderlyings
-	__uint32_t NoUnderlyings = 0, UnderlyingPXType = 0;
-	__uint64_t UnderlyingSecurityID = 0; 
-	float UnderlyingPx = 0.0;
+	__uint32_t UnderlyingsSequence_PMap = UNDEFINED, UnderlyingsSequence_PMap_length = UNDEFINED;
+	__uint32_t NoUnderlyings = 0, UnderlyingPXType[10] = {0};
+	__uint64_t UnderlyingSecurityID[10] = {0}; 
+	float UnderlyingPx[10] = {0.0};
 	//template
 	__uint64_t IndexSeq[10] = {0};
 
@@ -416,17 +408,33 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145,  
 				NoUnderlyings, initialValueI, MANDATORY, NONEOPERATOR);
 
-			if(NoUnderlyings > 0){}
+			if(NoUnderlyings > 0){
+
+				aux = getField(field, &ptr_FASTMessage, FASTMessage_length,	
+				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145, 0);
+			
+				UnderlyingsSequence_PMap_length = fieldLength(aux);
+				UnderlyingsSequence_PMap = bytetoInt32Decoder(aux);
+
+				UnderlyingSecurityID[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length,
+					NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145,
+					UnderlyingSecurityID[i != 0 ? i-1 : i], initialValueI, MANDATORY, DELTA);
+
+				UnderlyingPx[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
+					UnderlyingsSequence_PMap, UnderlyingsSequence_PMap_length, UNDERLYINGPX_145, 
+					UnderlyingPx[i != 0 ? i-1 : i], NONEOPERATOR, 
+					DEFAULT, DELTA, -2);
+				
+				UnderlyingPXType[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length,
+					NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145,
+					UnderlyingPXType[i != 0 ? i-1 : i], initialValueI, OPTIONAL, NONEOPERATOR);
+			}
 
 			IndexSeq[i] = getField64UI(&ptr_FASTMessage, FASTMessage_length, 
 				NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145, 
 				IndexSeq[i], initialValueI, OPTIONAL, NONEOPERATOR);
 		}
 	}
-
-	c2 = clock();
-	tempo = (double)((c2 - c1)) / CLOCKS_PER_SEC;
-	printf("\n 145(): %lf \n\n", tempo);
 
 	MD145Handler(MDUpdateAction, MDEntryType, RptSeq, QuoteCondition, SecurityID, MDEntryTime, MDEntryPx, MDEntrySize);
 
@@ -445,10 +453,20 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 		//SequenceUnderlyings
 		NoUnderlyings, UnderlyingPXType, UnderlyingSecurityID, IndexSeq, UnderlyingPx
 	);
+
+	/*c2 = clock();
+	tempo = (double)((c2 - c1)) / CLOCKS_PER_SEC;
+	printf("\n decodeOneMessage145(): %d bytes", FASTMessage_length);
+	printf("\n decodeOneMessage145(): %lf seg ", tempo);
+	printf("\n decodeOneMessage145(): %.1lf bytes/s \n\n", (float) FASTMessage_length / tempo);
+	sprintf(auxValuation, " decodeOneMessage145bs(): %.1lf bytes/s \n", (float) FASTMessage_length / tempo);
+	strcat(valuation, auxValuation);
+	fileV = fopen("valuation/decodeOneMessage145bs.txt", "a");
+	fputs(valuation, fileV);
+	fclose(fileV);*/
 }
 
 void MDHeartbeat_144(__uint8_t* FASTMessage, int FASTMessage_length){
-	c1 = clock();
 	__uint8_t field[1500] = {0x00};
 	unsigned int field_length = 0;
 	unsigned int noTemplateField = 0;
@@ -477,9 +495,6 @@ void MDHeartbeat_144(__uint8_t* FASTMessage, int FASTMessage_length){
 			field_length = 0;
     	}
     }
-	c2 = clock();
-	tempo = (double)((c2 - c1)) / CLOCKS_PER_SEC;
-	printf("\n 144(): %lf \n\n", tempo);
     t144toFIX(MsgSeqNum, SendingTime);
 }
 
@@ -516,7 +531,6 @@ void templateDecoder(__uint16_t TemplateID, __uint32_t PMap,
 }
 
 void identifyTemplate(__uint8_t* FASTMessage, int FASTMessage_length){
-	c1 = clock();
 	__uint8_t field[1500];
     __uint32_t PMap = 0;
     __uint16_t TemplateID = 0;
@@ -539,9 +553,6 @@ void identifyTemplate(__uint8_t* FASTMessage, int FASTMessage_length){
 				TemplateID = bytetoPMapDecoder(field, field_length);
 			}
 			if(TemplateID > 0){
-				c2 = clock();
-				tempo = (double)((c2 - c1)) / CLOCKS_PER_SEC;
-	    		printf("\n identifyTemplate(): %lf \n\n", tempo);
 				templateDecoder(TemplateID, PMap, FASTMessage, FASTMessage_length);
 				break;
 			}
@@ -552,8 +563,6 @@ void identifyTemplate(__uint8_t* FASTMessage, int FASTMessage_length){
 }
 
 void readMessage(FILE* file){
-	c1 = clock();
-
 	__uint8_t header[10];
 	__uint8_t byte;
 	__uint8_t FASTMessage[1500]; //2 bytes of MsgLength is the limit
@@ -587,17 +596,13 @@ void readMessage(FILE* file){
 			FASTMessage_length++;
 		}
 
-
-		c2 = clock();
-		tempo = (double)((c2 - c1)) / CLOCKS_PER_SEC;
-	    printf("\n readMessage(): %lf \n\n", tempo);
-
 		//to compare with the onix log
 		if(MsgSeqNum > 731915 && MsgSeqNum < 732049){ //731915){ //just to compare with the FIX log
-			printf("\n-----------------------------------------------------------------------------------------------------\n");
+			printf("\n---------------------------------------------------------------------------------------\n");
 			//printf(" \n Message %d: \n", i+1);
 			//printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n", MsgSeqNum, 
 				//NoChunks, CurrentChunk, MsgLength);
+
 			identifyTemplate(FASTMessage, FASTMessage_length);
 		}
 		//identifyTemplate(FASTMessage, FASTMessage_length);
@@ -933,6 +938,8 @@ float decimalOperator(float previousValue, __int64_t valueExp, __int64_t previou
 
 	if(operatorMan == DELTA){ /*need to improve all these functions*/
 		/* arquivar PMap_order, exp and/or mant and recalculate */
+		/* *ptr <- getFieldDecimal */
+		/* (*ptr) vet[2] \\ 0 is value and 1 is exp*/
 		__int64_t delta = 0, base = 0;
 		delta = valueMan;
 		if(previousValue != UNDEFINED && previousValue != ABSENT_64){ //assigned
@@ -1163,7 +1170,6 @@ __uint64_t bytetoInt64Decoder(__uint8_t* field){
 char* bytetoStringDecoder(__uint8_t* field){
 	__int32_t field_length = fieldLength(field);
 	char result[field_length], aux;
-
 	
 	if(*field == 0x00 || *field == 0x80){ //if the bmap is 0, the value = 0x00, if the field hasnt bit(optional), value: 0x80
 		strcpy(result, "EMPTY");
@@ -1238,7 +1244,6 @@ void t144toFIX(__uint32_t MsgSeqNum, __uint64_t SendingTime){
 
 	fputs(buff, file);
 	fclose(file);
-	
 }
 
 void t145toFIX(
@@ -1258,10 +1263,9 @@ void t145toFIX(
 	float* MDEntryPx, float* MDEntryInterestRate, float* NetChgPrevDay, float* LowLimitPrice, float* HighLimitPrice, 
 	float* TradingReferencePrice,
 	//SequenceUnderlyings
-	__uint32_t NoUnderlyings, __uint32_t UnderlyingPXType, __uint64_t UnderlyingSecurityID, __uint64_t* IndexSeq,
-	float UnderlyingPx
+	__uint32_t NoUnderlyings, __uint32_t* UnderlyingPXType, __uint64_t* UnderlyingSecurityID, __uint64_t* IndexSeq,
+	float *UnderlyingPx
 ){
-
 	char buff[1500];
 	strcpy(buff, "");
 	FILE *file;

@@ -47,6 +47,7 @@ void readMessage(FILE* file){
 			fread(&byte, 1, 1, file);
 			header[i] = byte;
 		}
+
 		MsgSeqNum = (header[0] << 24) | (header[1] << 16) | (header[2] << 8) | (header[3]); //concatenate the bytes
 		NoChunks = (header[4] << 8) | (header[5]);
 		CurrentChunk = (header[6] << 8) | (header[7]);
@@ -62,6 +63,7 @@ void readMessage(FILE* file){
 
 		if(MsgSeqNum > 731915){ //only to compare with the FIX log
 			printf("\n-----------------------------------------------------------------------------------------------------");
+
 			printf(" \n Message %d: \n", i+1);
 			printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n\n", MsgSeqNum, NoChunks, CurrentChunk, MsgLength);
 			printFields(FASTMessage, FASTMessage_length);
@@ -73,6 +75,7 @@ void readMessage(FILE* file){
 }
 
 int main () {
-	readMessage(openFile("51_Inc_FAST.bin"));
+	//readMessage(openFile("51_Inc_FAST.bin"));
+	readMessage(openFile("filteredLog.bin"));
     return 0;
 }

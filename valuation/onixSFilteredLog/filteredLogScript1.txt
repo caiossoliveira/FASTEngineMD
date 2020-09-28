@@ -1,0 +1,93 @@
+Start Time:  0:16:48.85 	
+Finish Time:  0:16:53.85 	
+- 	
+Start Time:  0:16:53.87 	
+Finish Time:  0:16:58.66 	
+- 	
+Start Time:  0:16:58.68 	
+Finish Time:  0:17:03.45 	
+- 	
+Start Time:  0:17:03.47 	
+Finish Time:  0:17:08.22 	
+- 	
+Start Time:  0:17:08.24 	
+Finish Time:  0:17:13.02 	
+- 	
+Start Time:  0:17:13.04 	
+Finish Time:  0:17:17.77 	
+- 	
+Start Time:  0:17:17.80 	
+Finish Time:  0:17:22.87 	
+- 	
+Start Time:  0:17:22.89 	
+Finish Time:  0:17:27.64 	
+- 	
+Start Time:  0:17:27.67 	
+Finish Time:  0:17:32.41 	
+- 	
+Start Time:  0:17:32.43 	
+Finish Time:  0:17:37.19 	
+- 	
+Start Time:  0:17:37.21 	
+Finish Time:  0:17:42.24 	
+- 	
+Start Time:  0:17:42.26 	
+Finish Time:  0:17:46.99 	
+- 	
+Start Time:  0:17:47.02 	
+Finish Time:  0:17:51.75 	
+- 	
+Start Time:  0:17:51.78 	
+Finish Time:  0:17:56.50 	
+- 	
+Start Time:  0:17:56.53 	
+Finish Time:  0:18:01.27 	
+- 	
+Start Time:  0:18:01.29 	
+Finish Time:  0:18:06.03 	
+- 	
+Start Time:  0:18:06.05 	
+Finish Time:  0:18:10.80 	
+- 	
+Start Time:  0:18:10.82 	
+Finish Time:  0:18:15.66 	
+- 	
+Start Time:  0:18:15.68 	
+Finish Time:  0:18:20.42 	
+- 	
+Start Time:  0:18:20.44 	
+Finish Time:  0:18:25.23 	
+- 	
+Start Time:  0:18:25.25 	
+Finish Time:  0:18:30.02 	
+- 	
+Start Time:  0:18:30.04 	
+Finish Time:  0:18:35.07 	
+- 	
+Start Time:  0:18:35.09 	
+Finish Time:  0:18:39.98 	
+- 	
+Start Time:  0:18:40.00 	
+Finish Time:  0:18:44.73 	
+- 	
+Start Time:  0:18:44.75 	
+Finish Time:  0:18:49.79 	
+- 	
+Start Time:  0:18:49.81 	
+Finish Time:  0:18:54.84 	
+- 	
+Start Time:  0:18:54.87 	
+Finish Time:  0:18:59.64 	
+- 	
+Start Time:  0:18:59.66 	
+Finish Time:  0:19:04.43 	
+- 	
+Start Time:  0:19:04.45 	
+Finish Time:  0:19:09.16 	
+- 	
+Start Time:  0:19:09.18 	
+Finish Time:  0:19:13.93 	
+- 	
+Start Time:  0:19:13.96 	
+Finish Time:  0:19:18.69 	
+- 
