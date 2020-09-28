@@ -50,9 +50,9 @@ void t145toFIX(
 	__uint64_t* MaxTradeVol, char (*MDEntryType)[1500], char (*QuoteCondition)[1500], char (*PriceType)[1500], 
 	char (*MDStreamID)[1500], char (*Currency)[1500], char (*TickDirection)[1500], char (*TradeCondition)[1500], 
 	char (*OrderID)[1500], char (*TradeID)[1500], char (*MDEntryBuyer)[1500], char (*MDEntrySeller)[1500], 
-	char (*PriceBandType)[1500], float* MDEntryPx, float* MDEntryInterestRate, float* NetChgPrevDay, float* LowLimitPrice, 
-	float* HighLimitPrice, float* TradingReferencePrice, __uint32_t NoUnderlyings, __uint32_t* UnderlyingPXType, 
-	__uint64_t* UnderlyingSecurityID, __uint64_t* IndexSeq, float* UnderlyingPx
+	char (*PriceBandType)[1500], float (*MDEntryPx)[2], float (*MDEntryInterestRate)[2], float (*NetChgPrevDay)[2], float (*LowLimitPrice)[2], 
+	float (*HighLimitPrice)[2], float (*TradingReferencePrice)[2], __uint32_t NoUnderlyings, __uint32_t* UnderlyingPXType, 
+	__uint64_t* UnderlyingSecurityID, __uint64_t* IndexSeq, float (*UnderlyingPx)[2]
 );
 
 void t144toFIX(__uint32_t MsgSeqNum, __uint64_t SendingTime);
@@ -71,9 +71,9 @@ __int64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length,
 void getFieldS(__uint8_t** FASTMessage, int FASTMessage_length, 
 	__uint32_t PMap, int PMap_length, int PMap_order,
 	char* value, char* previousValue, char* initialValue, int operator);
-float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length, 
+void getFieldD(__uint8_t** FASTMessage, int FASTMessage_length, 
 	__uint32_t PMap, int PMap_length, int PMap_order,
-	float previousValue, int operator, 
+	float* value, float* previousValue, int operator, 
 	int expOperator, int mantOperator, __int32_t initialExp);
 __uint8_t* getField(__uint8_t* newField, __uint8_t** FASTMessage, int FASTMessage_length, 
 	__uint32_t PMap, int PMap_length, int PMap_order, int isDecimal);
@@ -86,7 +86,7 @@ __uint32_t uint32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t
 	int PMapis1);
 void stringOperator(char* value, char* streamValue, char* previousValue, char* initialValue, int operator, 
 	int PMapIs1);
-float decimalOperator(float previousValue, __int64_t valueExp, __int64_t previousValueExp, __int64_t initialValueExp,
+float decimalOperator(float previousValue, __int32_t valueExp, __int32_t previousValueExp, __int32_t initialValueExp,
 	__int64_t valueMan, __int64_t previousValueMan, __int64_t initialValueMan, 
 	int operatorEnt, int operatorExp, int operatorMan, 
 	int PMapIs1);
@@ -108,6 +108,8 @@ void print32ui(char* text, __uint32_t var, char* buff);
 void prints(char* text, char* var, char* buff);
 void printvs(char* text, char (*var)[1500], char* buff);
 void printd(char* text, float var, char* buff);
+
+void test();
  
 __uint64_t globalSecurityID = 3809639;
 float book[10] = {9999.0, 9999.0, 9999.0, 9999.0, 9999.0, -9999.0, -9999.0, -9999.0, -9999.0, -9999.0};
@@ -121,6 +123,8 @@ int main () {
 	//readMessage(openFile("51_Inc_FAST.bin"));
 	readMessage(openFile("filteredLog.bin"));
 	printBook();
+
+	//test();
 
     return 0;
 }
@@ -197,13 +201,13 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 	char MDEntryBuyer[10][1500] = {"UNDEFINED"};
 	char MDEntrySeller[10][1500] = {"UNDEFINED"};
 	char PriceBandType[10][1500] = {"UNDEFINED"};
-	float MDEntryPx[10] = {0.0}, MDEntryInterestRate[10] = {0.0}, NetChgPrevDay[10] = {0.0}, LowLimitPrice[10] = {0.0}; 
-	float HighLimitPrice[10] = {0.0}, TradingReferencePrice[10] = {0.0};
+	float MDEntryPx[10][2] = {0.0}, MDEntryInterestRate[10][2] = {0.0}, NetChgPrevDay[10][2] = {0.0}, LowLimitPrice[10][2] = {0.0}; 
+	float HighLimitPrice[10][2] = {0.0}, TradingReferencePrice[10][2] = {0.0};
 	//SequenceUnderlyings
 	__uint32_t UnderlyingsSequence_PMap = UNDEFINED, UnderlyingsSequence_PMap_length = UNDEFINED;
 	__uint32_t NoUnderlyings = 0, UnderlyingPXType[10] = {0};
 	__uint64_t UnderlyingSecurityID[10] = {0}; 
-	float UnderlyingPx[10] = {0.0};
+	float UnderlyingPx[10][2] = {0.0};
 	//template
 	__uint64_t IndexSeq[10] = {0};
 
@@ -254,14 +258,14 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, QUOTECONDITION_145,  
 				QuoteCondition[i], QuoteCondition[i != 0 ? i-1 : i], initialValueC, NONEOPERATOR);
 
-			MDEntryPx[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
+			getFieldD(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYPX_145, 
-				MDEntryPx[i != 0 ? i-1 : i], NONEOPERATOR, 
+				MDEntryPx[i], MDEntryPx[i != 0 ? i-1 : i], NONEOPERATOR, 
 				DEFAULT, DELTA, -2);
 			
-			MDEntryInterestRate[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length,
+			getFieldD(&ptr_FASTMessage, FASTMessage_length,
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, MDENTRYINTERESTRATE_145,
-				MDEntryInterestRate[i != 0 ? i-1 : i], NONEOPERATOR, 
+				MDEntryInterestRate[i], MDEntryInterestRate[i != 0 ? i-1 : i], NONEOPERATOR, 
 				DEFAULT, DELTA, -2);
 			
 			NumberOfOrders[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
@@ -300,9 +304,9 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 				MDEntriesSequence_PMap_length, CURRENCY_145, 
 				Currency[i], Currency[i != 0 ? i-1 : i], initialValueC, COPY);
 			
-			NetChgPrevDay[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
+			getFieldD(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, NETCHGPREVDAY_145, 
-				NetChgPrevDay[i], NONEOPERATOR, 
+				NetChgPrevDay[i], NetChgPrevDay[i != 0 ? i-1 : i], NONEOPERATOR, 
 				DEFAULT, DELTA, 0);
 			
 			SellerDays[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
@@ -369,19 +373,19 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, PRICELIMITTYPE_145, 
 				PriceLimitType[i], initialValueI, OPTIONAL, NONEOPERATOR);
 			
-			LowLimitPrice[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
+			getFieldD(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, LOWLIMITPRICE_145,  
-				LowLimitPrice[i], NONEOPERATOR, 
+				LowLimitPrice[i], LowLimitPrice[i != 0 ? i-1 : i], NONEOPERATOR, 
 				DEFAULT, DELTA, 0);
 			
-			HighLimitPrice[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
+			getFieldD(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, HIGHLIMITPRICE_145, 
-				HighLimitPrice[i], NONEOPERATOR, 
+				HighLimitPrice[i], HighLimitPrice[i != 0 ? i-1 : i], NONEOPERATOR, 
 				DEFAULT, DELTA, 0);
 
-			TradingReferencePrice[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
+			getFieldD(&ptr_FASTMessage, FASTMessage_length, 
 				MDEntriesSequence_PMap, MDEntriesSequence_PMap_length, TRADINGREFERENCEPRICE_145, 
-				TradingReferencePrice[i], NONEOPERATOR, 
+				TradingReferencePrice[i], TradingReferencePrice[i != 0 ? i-1 : i], NONEOPERATOR, 
 				DEFAULT, DELTA, 0);
 			
 			PriceBandMidpointPriceType[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length, 
@@ -420,9 +424,9 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 					NONEBITMAP_145, NONEBITMAP_145, NONEBITMAP_145,
 					UnderlyingSecurityID[i != 0 ? i-1 : i], initialValueI, MANDATORY, DELTA);
 
-				UnderlyingPx[i] = getFieldD(&ptr_FASTMessage, FASTMessage_length, 
+				getFieldD(&ptr_FASTMessage, FASTMessage_length, 
 					UnderlyingsSequence_PMap, UnderlyingsSequence_PMap_length, UNDERLYINGPX_145, 
-					UnderlyingPx[i != 0 ? i-1 : i], NONEOPERATOR, 
+					UnderlyingPx[i], UnderlyingPx[i != 0 ? i-1 : i], NONEOPERATOR, 
 					DEFAULT, DELTA, -2);
 				
 				UnderlyingPXType[i] = getField32UI(&ptr_FASTMessage, FASTMessage_length,
@@ -436,7 +440,7 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 		}
 	}
 
-	MD145Handler(MDUpdateAction, MDEntryType, RptSeq, QuoteCondition, SecurityID, MDEntryTime, MDEntryPx, MDEntrySize);
+	//MD145Handler(MDUpdateAction, MDEntryType, RptSeq, QuoteCondition, SecurityID, MDEntryTime, MDEntryPx, MDEntrySize);
 
 	t145toFIX(
 		//Template
@@ -864,9 +868,9 @@ __int64_t int64Operator(__int64_t value, __int64_t previousValue, __int64_t init
     return value;
 }
 
-float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length, 
+void getFieldD(__uint8_t** FASTMessage, int FASTMessage_length, 
 	__uint32_t PMap, int PMap_length, int PMap_order,
-	float previousValue, int operator, 
+	float* value, float* previousValue, int operator, 
 	int expOperator, int mantOperator, __int32_t initialExp){
 
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
@@ -918,12 +922,13 @@ float getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 		}
 	}
 
-	decimal = decimalOperator(previousValue, exp, 0.0, initialExp, mant, 0, 0, 0, DEFAULT, DELTA, PMapIs1);
+	decimal = decimalOperator(*previousValue, exp, 0.0, initialExp, mant, 0, 0, 0, DEFAULT, DELTA, PMapIs1);
 
-	return decimal;
+	value[0] = decimal,
+	value[1] = exp; 
 }
 
-float decimalOperator(float previousValue, __int64_t valueExp, __int64_t previousValueExp, __int64_t initialValueExp,
+float decimalOperator(float previousValue, __int32_t valueExp, __int32_t previousValueExp, __int32_t initialValueExp,
 	__int64_t valueMan, __int64_t previousValueMan, __int64_t initialValueMan, 
 	int operatorEnt, int operatorExp, int operatorMan, 
 	int PMapIs1){
@@ -1260,11 +1265,11 @@ void t145toFIX(
 	char (*MDEntryType)[1500], char (*QuoteCondition)[1500], char (*PriceType)[1500], char (*MDStreamID)[1500], 
 	char (*Currency)[1500], char (*TickDirection)[1500], char (*TradeCondition)[1500], char (*OrderID)[1500], 
 	char (*TradeID)[1500], char (*MDEntryBuyer)[1500], char (*MDEntrySeller)[1500], char (*PriceBandType)[1500], 
-	float* MDEntryPx, float* MDEntryInterestRate, float* NetChgPrevDay, float* LowLimitPrice, float* HighLimitPrice, 
-	float* TradingReferencePrice,
+	float (*MDEntryPx)[2], float (*MDEntryInterestRate)[2], float (*NetChgPrevDay)[2], float (*LowLimitPrice)[2], float (*HighLimitPrice)[2], 
+	float (*TradingReferencePrice)[2],
 	//SequenceUnderlyings
 	__uint32_t NoUnderlyings, __uint32_t* UnderlyingPXType, __uint64_t* UnderlyingSecurityID, __uint64_t* IndexSeq,
-	float *UnderlyingPx
+	float (*UnderlyingPx)[2]
 ){
 	char buff[1500];
 	strcpy(buff, "");
@@ -1295,8 +1300,8 @@ void t145toFIX(
 			print64ui("48=%ld|", SecurityID[i], buff);
 			print32ui("83=%d|", RptSeq[i], buff);
 			printvs("276=%s|", QuoteCondition + i, buff);
-			printd("270=%.4g|", MDEntryPx[i], buff);
-			printd("37014=%.2f|", MDEntryInterestRate[i], buff);
+			printd("270=%.4g|", MDEntryPx[i][0], buff);
+			printd("37014=%.2f|", MDEntryInterestRate[i][0], buff);
 			print32ui("346=%d|", NumberOfOrders[i], buff);
 			printvs("423=%s|", PriceType + i, buff);
 			print32ui("273=%d|", MDEntryTime[i], buff);
@@ -1306,7 +1311,7 @@ void t145toFIX(
 			print32ui("37017=%d|", MDInsertTime[i], buff);
 			printvs("1500=%s|", MDStreamID + i, buff);
 			printvs("15=%s|", Currency + i, buff);
-			printd("451=%.2f|", NetChgPrevDay[i], buff);
+			printd("451=%.2f|", NetChgPrevDay[i][0], buff);
 			print32ui("287=%d|", SellerDays[i], buff);
 			print64ui("1020=%ld|", TradeVolume[i], buff);
 			printvs("274=%s|", TickDirection + i, buff);
@@ -1323,9 +1328,9 @@ void t145toFIX(
 			print32ui("37013=%d|", PriceAdjustmentMethod[i], buff);
 			printvs("6939=%s|", PriceBandType + i, buff);
 			print32ui("1306=%d|", PriceLimitType[i], buff);
-			printd("1148=%.2f|", LowLimitPrice[i], buff);
-			printd("1149=%.2f|", HighLimitPrice[i], buff);
-			printd("1150=%.2f|", TradingReferencePrice[i], buff);
+			printd("1148=%.2f|", LowLimitPrice[i][0], buff);
+			printd("1149=%.2f|", HighLimitPrice[i][0], buff);
+			printd("1150=%.2f|", TradingReferencePrice[i][0], buff);
 			print32ui("37008=%d|", PriceBandMidpointPriceType[i], buff);
 			print64ui("37003=%ld|", AvgDailyTradedQty[i], buff);
 			print64ui("432=%ld|", ExpireDate[i], buff);
@@ -1401,4 +1406,31 @@ void printd(char* text, float var, char* buff){
 		strcat(buff, auxBuff);
 		PRINTD(text, var);
 	}
+}
+
+void test2(float (*preco)[2]){ 
+	
+	printf("\n exp: %d ", (__int32_t) preco[0][1]);
+	printf("\n preco: %.2f ", preco[0][0]);
+
+	float decimal = pow(10, (__int32_t) preco[0][1]);
+	__int64_t mant = preco[0][0] / decimal;
+
+	printf("\n mant: %ld ", mant);
+
+	printf("\n");
+
+}
+
+void test(){
+	__uint8_t field[2] = {0x0a, 0x85};
+	__int64_t mant = bytetoInt64Decoder(field);
+	__int32_t exp = -2;
+
+	float decimal = pow(10, exp);
+	decimal = mant * decimal;
+
+	float preco[10][2] = {decimal, exp};
+
+	test2(preco);
 }
