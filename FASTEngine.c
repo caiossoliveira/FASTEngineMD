@@ -912,6 +912,8 @@ void getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 		exp = -80;
 
 		if(initialExp != 0){ 
+			exp = initialExp;
+
 			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); //get the mant
 			mant = bytetoInt64Decoder(ptrMant); //decode the mantissa
 
@@ -928,7 +930,7 @@ void getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 	decimal = decimalOperator(*previousValue, exp, (__int32_t) previousValue[1], initialExp, mant, previousMant, 
 		operator, expOperator, mantOperator, PMapIs1);
 
-	value[0] = decimal,
+	value[0] = decimal;
 	value[1] = exp; 
 }
 
@@ -950,10 +952,11 @@ float decimalOperator(float previousValue, __int32_t valueExp, __int32_t previou
 		/* *ptr <- getFieldDecimal */
 		/* (*ptr) vet[2] \\ 0 is value and 1 is exp*/
 		__int64_t delta = 0, base = 0;
-		delta = valueMan;
+		delta = valueMan; //value in the stream
 		if(previousValue != UNDEFINED && previousValue != ABSENT_64){ //assigned
-			base = pow(10, valueExp * -1); //recalculate de mantissa
-			base = (previousValue * base);
+			/*base = pow(10, valueExp * -1); //recalculate de mantissa
+			base = (previousValue * base);*/
+			base = previousValueMan;
 			valueMan = base + delta;
 			float decimal = pow(10, valueExp);
 		}
