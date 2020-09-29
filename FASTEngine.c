@@ -87,7 +87,7 @@ __uint32_t uint32Operator(__uint32_t value, __uint32_t previousValue, __uint32_t
 void stringOperator(char* value, char* streamValue, char* previousValue, char* initialValue, int operator, 
 	int PMapIs1);
 float decimalOperator(float previousValue, __int32_t valueExp, __int32_t previousValueExp, __int32_t initialValueExp,
-	__int64_t valueMan, __int64_t previousValueMan, __int64_t initialValueMan, 
+	__int64_t valueMan, __int64_t previousValueMan,
 	int operatorEnt, int operatorExp, int operatorMan, 
 	int PMapIs1);
 
@@ -922,14 +922,18 @@ void getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 		}
 	}
 
-	decimal = decimalOperator(*previousValue, exp, 0.0, initialExp, mant, 0, 0, 0, DEFAULT, DELTA, PMapIs1);
+	float aux = pow(10, (__int32_t) previousValue[1]);
+	__int64_t previousMant = previousValue[0] / aux;
+
+	decimal = decimalOperator(*previousValue, exp, (__int32_t) previousValue[1], initialExp, mant, previousMant, 
+		operator, expOperator, mantOperator, PMapIs1);
 
 	value[0] = decimal,
 	value[1] = exp; 
 }
 
 float decimalOperator(float previousValue, __int32_t valueExp, __int32_t previousValueExp, __int32_t initialValueExp,
-	__int64_t valueMan, __int64_t previousValueMan, __int64_t initialValueMan, 
+	__int64_t valueMan, __int64_t previousValueMan,
 	int operatorEnt, int operatorExp, int operatorMan, 
 	int PMapIs1){
 
