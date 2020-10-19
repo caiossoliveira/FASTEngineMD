@@ -1,3 +1,9 @@
+/* 
+	FASTEngine.c is a "hardware like" implementation in C programming language for FAST to FIX decoding and order book handling.
+	Author: Caio Oliveira (caiooliveira@usp.br)
+
+*/
+
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -36,8 +42,10 @@ void templateDecoder(__uint16_t TemplateID, __uint32_t PMap,
 void MDHeartbeat_144(__uint8_t* FASTMessage, int FASTMessage_length);
 void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_length);
 
-void MD145Handler(__uint32_t* MDUpdateAction, char (*MDEntryType)[1500], __uint32_t* RptSeq, char (*QuoteCondition)[1500], 
-	__uint64_t* SecurityID, __uint32_t* MDEntryTime, float* MDEntryPx, __uint64_t* MDEntrySize);
+void MD145Handler(__uint32_t NoMDEntries, __uint32_t* MDUpdateAction, char (*MDEntryType)[1500], __uint32_t* RptSeq, char (*QuoteCondition)[1500], __uint64_t* SecurityID, 
+__uint32_t* MDEntryTime, __uint32_t* MDInsertDate, __uint32_t* MDInsertTime, float (*MDEntryPx)[2], __uint32_t* NumberofOrders, 
+__uint32_t* MDEntryDate, __uint64_t* MDEntrySize, char (*MDStreamID)[1500], __uint64_t* ExpireDate, __uint64_t* EarlyTermination, 
+char (*MDEntryBuyer)[1500], char (*MDEntrySeller)[1500], __uint32_t* MDEntryPositionNo, char (*OrderID)[1500]);
 
 void t145toFIX(
 	__uint32_t MsgSeqNum, __uint32_t TradeDate, __uint64_t SendintTime, __uint32_t NoMDEntries, 
@@ -113,6 +121,8 @@ void test();
  
 __uint64_t globalSecurityID = 3809639;
 float book[10] = {9999.0, 9999.0, 9999.0, 9999.0, 9999.0, -9999.0, -9999.0, -9999.0, -9999.0, -9999.0};
+float bidOrderDepthBook[10][2];
+float offerOrderDepthBook[10][2];
 int levels = 1;
 
 int main () {	
@@ -120,8 +130,8 @@ int main () {
 	/*strcpy(valuation, "");
 	c1 = clock();*/
 
-	//readMessage(openFile("51_Inc_FAST.bin"));
-	readMessage(openFile("filteredLog.bin"));
+	readMessage(openFile("51_Inc_FAST.bin"));
+	//readMessage(openFile("filteredLog.bin"));
 	printBook();
 
 	//test();
@@ -130,13 +140,24 @@ int main () {
 }
 
 void printBook(){
-	printf("\n --Book----------------------------------- \n");
+	/*printf("\n --Book----------------------------------- \n");
 	printf("   SecurityID: %ld \n", globalSecurityID);
 	if(levels == 1){
 		printf("    -TOB--------------------------------\n");
 		printf("     Best offer: %.2f \n", book[0]); //best option to buy
 		printf("     Best bid: %.2f \n\n\n", book[5]); //best option to sell
+	}*/
+
+	printf("\n --Book-------------------------------------------------------------- \n");
+	printf("   SecurityID: %ld \n\n", globalSecurityID);
+	printf("    \t \t Bid \t \t \t \t Offer \n\n");
+	printf("     PosNo \t Size \t Px \t \t Px \t Size \t PosNo \n");
+
+	for(int i = 0; i < 10; i++){
+		printf("      %.d \t %.d \t %.2f \t \t %.2f \t %.d \t %.d \n", i+1, (int) bidOrderDepthBook[i][0], bidOrderDepthBook[i][1], offerOrderDepthBook[i][1],
+			(int) offerOrderDepthBook[i][0], i+1);
 	}
+	printf("\n");
 }
 
 void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_length){
@@ -440,7 +461,9 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, int FASTMessage_l
 		}
 	}
 
-	//MD145Handler(MDUpdateAction, MDEntryType, RptSeq, QuoteCondition, SecurityID, MDEntryTime, MDEntryPx, MDEntrySize);
+	MD145Handler(NoMDEntries, MDUpdateAction, MDEntryType, RptSeq, QuoteCondition, SecurityID, MDEntryTime, MDInsertDate, MDInsertTime,
+		MDEntryPx, NumberOfOrders, MDEntryDate, MDEntrySize, MDStreamID, ExpireDate, EarlyTermination, MDEntryBuyer, 
+		MDEntrySeller, MDEntryPositionNo, OrderID);
 
 	t145toFIX(
 		//Template
@@ -502,18 +525,90 @@ void MDHeartbeat_144(__uint8_t* FASTMessage, int FASTMessage_length){
     t144toFIX(MsgSeqNum, SendingTime);
 }
 
-void MD145Handler(__uint32_t* MDUpdateAction, char (*MDEntryType)[1500], __uint32_t* RptSeq, char (*QuoteCondition)[1500], 
-	__uint64_t* SecurityID, __uint32_t* MDEntryTime, float* MDEntryPx, __uint64_t* MDEntrySize){
+void MD145Handler(__uint32_t NoMDEntries, __uint32_t* MDUpdateAction, char (*MDEntryType)[1500], __uint32_t* RptSeq, char (*QuoteCondition)[1500], __uint64_t* SecurityID, 
+__uint32_t* MDEntryTime, __uint32_t* MDInsertDate, __uint32_t* MDInsertTime, float (*MDEntryPx)[2], __uint32_t* NumberofOrders, 
+__uint32_t* MDEntryDate, __uint64_t* MDEntrySize, char (*MDStreamID)[1500], __uint64_t* ExpireDate, __uint64_t* EarlyTermination, 
+char (*MDEntryBuyer)[1500], char (*MDEntrySeller)[1500], __uint32_t* MDEntryPositionNo, char (*OrderID)[1500]){
 
-	if(*SecurityID == globalSecurityID){
-		if(*MDUpdateAction == 0){ //new
-			if(levels == 1){
-				if(MDEntryType[0][0] == '0'){ //bid
-					book[0] = *MDEntryPx;
+	for(int i = 0; i < NoMDEntries; i++){
+		if(SecurityID[i] == globalSecurityID){
+			if(MDUpdateAction[i] == 0){ //new
+				if(MDEntryType[i][0] == '0'){ //bid
+					for(int j = 9; j >= MDEntryPositionNo[i]; j--){ //shift
+						bidOrderDepthBook[j][1] = bidOrderDepthBook[j-1][1];
+						bidOrderDepthBook[j][0] = bidOrderDepthBook[j-1][0];
+					}
+					bidOrderDepthBook[MDEntryPositionNo[i] -1][1] = MDEntryPx[i][0]; //add
+					bidOrderDepthBook[MDEntryPositionNo[i] -1][0] = MDEntrySize[i];
 				}
-				else if(MDEntryType[0][0] == '1'){ //offer
-					book[5] = *MDEntryPx;
+				else if(MDEntryType[i][0] == '1'){ //offer
+					for(int j = 9; j >= MDEntryPositionNo[i]; j--){ //shift
+						offerOrderDepthBook[j][1] = offerOrderDepthBook[j-1][1];
+						offerOrderDepthBook[j][0] = offerOrderDepthBook[j-1][0];
+					}
+					offerOrderDepthBook[MDEntryPositionNo[i] -1][1] = MDEntryPx[i][0]; //add
+					offerOrderDepthBook[MDEntryPositionNo[i] -1][0] = MDEntrySize[i];
 				}
+			}
+			else if(*MDUpdateAction == 1){ //change
+
+			}
+			else if(*MDUpdateAction == 2){ //delete
+				if(MDEntryType[i][0] == '0'){ //bid
+					bidOrderDepthBook[MDEntryPositionNo[i] - 1][1] = 0.0;
+					bidOrderDepthBook[MDEntryPositionNo[i] - 1][0] = 0; 
+					for(int j = MDEntryPositionNo[i] - 1; j < 10; j++){ 
+						bidOrderDepthBook[MDEntryPositionNo[j]][1] = bidOrderDepthBook[j+1][1];
+						bidOrderDepthBook[MDEntryPositionNo[j]][0] = bidOrderDepthBook[j+1][0];
+					}
+				}
+				else if(MDEntryType[i][0] == '1'){ //offer
+					offerOrderDepthBook[MDEntryPositionNo[i] - 1][1] = 0.0;
+					offerOrderDepthBook[MDEntryPositionNo[i] - 1][0] = 0;
+					for(int j = MDEntryPositionNo[i]; j < 10; j++){
+						offerOrderDepthBook[MDEntryPositionNo[j]][1] = offerOrderDepthBook[j+1][1];
+						offerOrderDepthBook[MDEntryPositionNo[j]][0] = offerOrderDepthBook[j+1][0];
+					}
+				}
+			}
+			else if(*MDUpdateAction == 3){ //deletethu
+				if(MDEntryType[i][0] == '0'){ //bid
+					for(int j = 0; j < 10; j++){ //delete
+						bidOrderDepthBook[j][1] = 0.0;
+						bidOrderDepthBook[j][0] = 0;
+					}
+				}
+				else if(MDEntryType[i][0] == '1'){ //offer
+					for(int j = 0; j < 10; j++){ //delete
+						offerOrderDepthBook[j][1] = 0.0;
+						offerOrderDepthBook[j][0] = 0;
+					}
+				}
+			}
+			else if(*MDUpdateAction == 4){ //deletefrom
+				if(MDEntryType[i][0] == '0'){ //bid
+					for(int j = 0; j < MDEntryPositionNo[i]; j++){ //delete
+						bidOrderDepthBook[j][1] = 0.0;
+						bidOrderDepthBook[j][0] = 0;
+					}
+					for(int j = 0; j < 10; j++){ //shift
+						bidOrderDepthBook[j][1] = bidOrderDepthBook[j + MDEntryPositionNo[i]][1];
+						bidOrderDepthBook[j][0] = bidOrderDepthBook[j + MDEntryPositionNo[i]][0];
+					}
+				}
+				else if(MDEntryType[i][0] == '1'){ //offer
+					for(int j = 0; j < MDEntryPositionNo[i]; j++){
+						offerOrderDepthBook[j][1] = 0.0;
+						offerOrderDepthBook[j][0] = 0;
+					}
+					for(int j = 0; j < 10; j++){ //shift
+						offerOrderDepthBook[j][1] = offerOrderDepthBook[j + MDEntryPositionNo[i]][1];
+						offerOrderDepthBook[j][0] = offerOrderDepthBook[j + MDEntryPositionNo[i]][0];
+					}
+				}
+			}
+			else if(*MDUpdateAction == 5){ //overlay
+			
 			}
 		}
 	}
@@ -947,15 +1042,10 @@ float decimalOperator(float previousValue, __int32_t valueExp, __int32_t previou
 		valueExp = initialValueExp;
 	}
 
-	if(operatorMan == DELTA){ /*need to improve all these functions*/
-		/* arquivar PMap_order, exp and/or mant and recalculate */
-		/* *ptr <- getFieldDecimal */
-		/* (*ptr) vet[2] \\ 0 is value and 1 is exp*/
+	if(operatorMan == DELTA){ 
 		__int64_t delta = 0, base = 0;
 		delta = valueMan; //value in the stream
 		if(previousValue != UNDEFINED && previousValue != ABSENT_64){ //assigned
-			/*base = pow(10, valueExp * -1); //recalculate de mantissa
-			base = (previousValue * base);*/
 			base = previousValueMan;
 			valueMan = base + delta;
 			float decimal = pow(10, valueExp);
