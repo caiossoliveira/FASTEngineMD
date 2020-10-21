@@ -531,7 +531,7 @@ __uint32_t* MDEntryDate, __uint64_t* MDEntrySize, char (*MDStreamID)[1500], __ui
 char (*MDEntryBuyer)[1500], char (*MDEntrySeller)[1500], __uint32_t* MDEntryPositionNo, char (*OrderID)[1500]){
 
 	for(int i = 0; i < NoMDEntries; i++){
-		if(SecurityID[i] == globalSecurityID){
+		if(SecurityID[i] == globalSecurityID && MDEntryPositionNo[i] < 11){
 			if(MDUpdateAction[i] == 0){ //new
 				if(MDEntryType[i][0] == '0'){ //bid
 					for(int j = 9; j >= MDEntryPositionNo[i]; j--){ //shift
@@ -551,7 +551,14 @@ char (*MDEntryBuyer)[1500], char (*MDEntrySeller)[1500], __uint32_t* MDEntryPosi
 				}
 			}
 			else if(*MDUpdateAction == 1){ //change
-
+				if(MDEntryType[i][0] == '0'){ //bid
+					bidOrderDepthBook[MDEntryPositionNo[i] -1][1] = MDEntryPx[i][0]; //change
+					bidOrderDepthBook[MDEntryPositionNo[i] -1][0] = MDEntrySize[i]; //change
+				}
+				else if(MDEntryType[i][0] == '1'){ //offer
+					offerOrderDepthBook[MDEntryPositionNo[i] -1][1] = MDEntryPx[i][0]; //change
+					offerOrderDepthBook[MDEntryPositionNo[i] -1][0] = MDEntrySize[i]; //change
+				}
 			}
 			else if(*MDUpdateAction == 2){ //delete
 				if(MDEntryType[i][0] == '0'){ //bid
@@ -608,7 +615,32 @@ char (*MDEntryBuyer)[1500], char (*MDEntrySeller)[1500], __uint32_t* MDEntryPosi
 				}
 			}
 			else if(*MDUpdateAction == 5){ //overlay
-			
+				if(MDEntryType[i][0] == '0'){ //bid
+					if(MDEntryPx[i][0] > 0){
+						bidOrderDepthBook[MDEntryPositionNo[i] -1][1] = MDEntryPx[i][0]; //overlay
+					}
+					else{ //delete
+						bidOrderDepthBook[MDEntryPositionNo[i] - 1][1] = 0.0; 
+						bidOrderDepthBook[MDEntryPositionNo[i] - 1][0] = 0; 
+						for(int j = MDEntryPositionNo[i] - 1; j < 10; j++){ //shift
+							bidOrderDepthBook[MDEntryPositionNo[j]][1] = bidOrderDepthBook[j+1][1];
+							bidOrderDepthBook[MDEntryPositionNo[j]][0] = bidOrderDepthBook[j+1][0];
+						}
+					}
+				}
+				else if(MDEntryType[i][0] == '1'){ //offer
+					if(MDEntryPx[i][0] > 0){
+						offerOrderDepthBook[MDEntryPositionNo[i] -1][1] = MDEntryPx[i][0]; //overlay
+					}
+					else{
+						offerOrderDepthBook[MDEntryPositionNo[i] - 1][1] = 0.0;
+						offerOrderDepthBook[MDEntryPositionNo[i] - 1][0] = 0;
+						for(int j = MDEntryPositionNo[i]; j < 10; j++){
+							offerOrderDepthBook[MDEntryPositionNo[j]][1] = offerOrderDepthBook[j+1][1];
+							offerOrderDepthBook[MDEntryPositionNo[j]][0] = offerOrderDepthBook[j+1][0];
+						}
+					}
+				}
 			}
 		}
 	}
@@ -977,6 +1009,7 @@ void getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
     long int mant = 0;
     float decimal = 0.0;
     int thereIsPMap = 0, PMapIs1 = 0;
+	int isAbsent = 0;
 
 	if(PMap_order > 0){
 		thereIsPMap = 1;
@@ -984,7 +1017,8 @@ void getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 			PMapIs1 = 1;			
 		}
 	}
-
+	int test1 = 0;
+	int test2 = 0;
 	if(thereIsPMap && PMapIs1){ //If set, the value appears in stream in a nullable representation. There's a exp in the msg
 		ptrExp = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); 
 		if(*ptrExp != 0x80){ //if it is non null
@@ -1001,6 +1035,9 @@ void getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 			}
 			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); //get the mant
 			mant = bytetoInt64Decoder(ptrMant); 
+		}
+		else{
+			isAbsent = 1;
 		}
 	}
 	else{ //if the bit is 0, default exp = initialExp
@@ -1022,11 +1059,17 @@ void getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 	float aux = pow(10, (__int32_t) previousValue[1]);
 	__int64_t previousMant = previousValue[0] / aux;
 
-	decimal = decimalOperator(*previousValue, exp, (__int32_t) previousValue[1], initialExp, mant, previousMant, 
+	if(isAbsent == 1){
+		value[0] = 0.0;
+		value[1] = 0; 
+	}
+	else{
+		decimal = decimalOperator(*previousValue, exp, (__int32_t) previousValue[1], initialExp, mant, previousMant, 
 		operator, expOperator, mantOperator, PMapIs1);
 
-	value[0] = decimal;
-	value[1] = exp; 
+		value[0] = decimal;
+		value[1] = exp; 
+	}
 }
 
 float decimalOperator(float previousValue, __int32_t valueExp, __int32_t previousValueExp, __int32_t initialValueExp,
@@ -1042,7 +1085,7 @@ float decimalOperator(float previousValue, __int32_t valueExp, __int32_t previou
 		valueExp = initialValueExp;
 	}
 
-	if(operatorMan == DELTA){ 
+	if(operatorMan == DELTA && valueExp != -80){ 
 		__int64_t delta = 0, base = 0;
 		delta = valueMan; //value in the stream
 		if(previousValue != UNDEFINED && previousValue != ABSENT_64){ //assigned
@@ -1053,7 +1096,7 @@ float decimalOperator(float previousValue, __int32_t valueExp, __int32_t previou
 	}
 		
 	float decimal = pow(10, valueExp);
-	
+
 	return valueMan * decimal;
 }
 

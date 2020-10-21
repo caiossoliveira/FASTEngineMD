@@ -26,8 +26,16 @@ for x in range(0, num_msgs - 1):
     isEqual = 1
     findField = 0
 
-    for i in line1:
+    for i in line1: #logB3 ⊂ myLog
         for j in line2:
+            if j == i:
+                findField = 1
+        if findField == 0:
+            isEqual = 0
+        findField = 0
+
+    for i in line2: #myLog ⊂ B3
+        for j in line1:
             if j == i:
                 findField = 1
         if findField == 0:
