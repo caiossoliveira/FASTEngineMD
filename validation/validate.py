@@ -1,7 +1,7 @@
 import os
 
-b3Log = "fixtestlogb3-3.txt"
-myLog = "logFIX51-FASTEngineMD.txt"
+b3Log = "/media/anoni/Dados/Documentos/USP/FASTDecoder/FASTEngineMD/validation/fixtestlogb3-3.txt" #"fixtestlogb3-3.txt"
+myLog =  "/media/anoni/Dados/Documentos/USP/FASTDecoder/FASTEngineMD/validation/logFIX51-FASTEngineMD.txt" #"logFIX51-FASTEngineMD.txt"
 
 fixlogb3 = open(b3Log, "r") #open the file
 fixlogmine = open(myLog, "r")
@@ -14,6 +14,7 @@ fixlogmine = open(myLog, "r")
 
 num_msgs = num_msgsB3 if num_msgsB3 > num_msgsMine else num_msgsMine #considerate the bigger file log
 noErrors = 0
+noHits = 0
 
 for x in range(0, num_msgs - 1):
     
@@ -48,6 +49,7 @@ for x in range(0, num_msgs - 1):
         print("Mine: ", list2)
         print("-------------------------------------------------------------------------")
 
+
 print("\n-----------------------------------------\n")
 print("Report: ")
 print("Number of messages:", num_msgs)
@@ -56,4 +58,4 @@ print("{:.2f}".format(noErrors/num_msgs * 100), "% of errors \n")
 
 fixlogb3.close() #close the file
 fixlogmine.close()
-os.remove("logFIX51-FASTEngineMD.txt") #delete file
+os.remove(myLog) #delete file

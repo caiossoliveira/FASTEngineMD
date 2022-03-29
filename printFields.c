@@ -42,7 +42,7 @@ void readMessage(FILE* file){
 	int CurrentChunk = 0;
 	int MsgLength = 0;
 
-	for(int i = 0; i < 1266; i++){ // number of messages //1250
+	for(int i = 0; i < 2000; i++){ // number of messages //1250
 		for(int i = 0; i < 10; i++){ //read header
 			fread(&byte, 1, 1, file);
 			header[i] = byte;
@@ -75,7 +75,7 @@ void readMessage(FILE* file){
 }
 
 int main () {
-	//readMessage(openFile("51_Inc_FAST.bin"));
-	readMessage(openFile("filteredLog.bin"));
+	readMessage(openFile("51_Inc_FAST.bin"));
+	//readMessage(openFile("filteredLog.bin"));
     return 0;
 }

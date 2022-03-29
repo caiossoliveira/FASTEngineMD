@@ -540,6 +540,10 @@ char (*MDEntryBuyer)[1500], char (*MDEntrySeller)[1500], __uint32_t* MDEntryPosi
 					}
 					bidOrderDepthBook[MDEntryPositionNo[i] -1][1] = MDEntryPx[i][0]; //add
 					bidOrderDepthBook[MDEntryPositionNo[i] -1][0] = MDEntrySize[i];
+
+					if(bidOrderDepthBook[MDEntryPositionNo[i] -1][1] == 0){
+						bidOrderDepthBook[MDEntryPositionNo[i] -1][0] = 0;
+					}
 				}
 				else if(MDEntryType[i][0] == '1'){ //offer
 					for(int j = 9; j >= MDEntryPositionNo[i]; j--){ //shift
@@ -704,7 +708,7 @@ void readMessage(FILE* file){
 	int CurrentChunk = 0;
 	int MsgLength = 0;
 
-	for(int i = 0; i < 1500; i++){ // number of messages //1250
+	for(int i = 0; i < 2000; i++){ // number of messages //1250
 	//while(1){
 		for(int i = 0; i < 10; i++){ //read header
 			if(fread(&byte, 1, 1, file) > 0){
@@ -728,7 +732,7 @@ void readMessage(FILE* file){
 		}
 
 		//to compare with the onix log
-		if(MsgSeqNum > 731915 && MsgSeqNum < 732049){ //731915){ //just to compare with the FIX log
+		if(MsgSeqNum > 731115 && MsgSeqNum < 732436){ //731915 732049){ //just to compare with the FIX log
 			printf("\n---------------------------------------------------------------------------------------\n");
 			//printf(" \n Message %d: \n", i+1);
 			//printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n", MsgSeqNum, 
@@ -1000,6 +1004,7 @@ void getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 	float* value, float* previousValue, int operator, 
 	int expOperator, int mantOperator, __int32_t initialExp){
 
+
 	const __uint32_t aux_bitMap = 0b00000000000000000000000000000001;
     __uint8_t streamValue[1500];
 
@@ -1020,7 +1025,9 @@ void getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 	int test1 = 0;
 	int test2 = 0;
 	if(thereIsPMap && PMapIs1){ //If set, the value appears in stream in a nullable representation. There's a exp in the msg
+
 		ptrExp = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); 
+
 		if(*ptrExp != 0x80){ //if it is non null
 			exp = bytetoInt32Decoder(ptrExp); //decode the exp
 
@@ -1035,6 +1042,24 @@ void getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 			}
 			ptrMant = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 1); //get the mant
 			mant = bytetoInt64Decoder(ptrMant); 
+
+			size = fieldLength(ptrMant);
+			size = (size * 8) - size;
+
+			if(isNegative(mant, size)){
+				//printf("\n\n it is negative (%ld)", mant);
+				mant = twosComplement(mant, size);
+				//printf("\n Negative: %ld", mant);
+
+			}
+			/*else{
+				printf("\n\n it is not negative  (%ld) \n\n", mant);
+			}*/
+
+			/*if(PMap_order == MDENTRYPX_145){
+				printf("\nTest exp: %d ", exp);
+				printf("\nTest mant: %ld \n", mant);
+			}*/
 		}
 		else{
 			isAbsent = 1;
@@ -1059,6 +1084,10 @@ void getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 	float aux = pow(10, (__int32_t) previousValue[1]);
 	__int64_t previousMant = previousValue[0] / aux;
 
+	/*if(PMap_order == MDENTRYPX_145){
+		printf("\nTest previousMant: %ld \n", previousMant);
+	}*/
+
 	if(isAbsent == 1){
 		value[0] = 0.0;
 		value[1] = 0; 
@@ -1069,6 +1098,10 @@ void getFieldD(__uint8_t** FASTMessage, int FASTMessage_length,
 
 		value[0] = decimal;
 		value[1] = exp; 
+
+		/*if(PMap_order == MDENTRYPX_145){
+			printf("\nTest decimal: %.2f \n", decimal);
+		}*/
 	}
 }
 

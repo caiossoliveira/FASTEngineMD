@@ -85,180 +85,185 @@ void MDIncRefresh_145(__uint32_t PMap, __uint8_t* FASTMessage, unsigned int FAST
 	PRINT;
 
 	if(NoMDEntries > 0){ //sequence
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		MDEntriesSequence_PMap = bytetoInt32Decoder(aux);
-		MDEntriesSequence_PMap_length = fieldLength(aux);
+		for(int i = 0; i < NoMDEntries; i++)
+		{
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			MDEntriesSequence_PMap_length = fieldLength(aux);
+			MDEntriesSequence_PMap = bytetoInt32Decoder(aux);
 
-		printf("\n MDEntriesSequence_PMap: ");
-		PRINT;
+			printf("\n\n PMAP: ");
+			for(int i=0; i < MDEntriesSequence_PMap_length; i++){
+				printf("%02x ", (unsigned int) *aux++); 
+			}
 
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDUPDATEACTION, MDEntriesSequence_PMap_length);
-		printf("\n MDUpdateAction: ");
-		PRINT;
-		
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYTYPE, MDEntriesSequence_PMap_length);
-		printf("\n MDEntryType: ");
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, SECURITYID, MDEntriesSequence_PMap_length);
-		printf("\n SecurityID: ");
-		PRINT;
-		
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, RPTSEQ, MDEntriesSequence_PMap_length);
-		printf("\n RptSeq: "); 
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, QUOTECONDITION, MDEntriesSequence_PMap_length);
-		printf("\n QuoteCondition: ");
-		PRINT;
-
-		printf("\n MDEntryPx: ");
-		getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPX, MDEntriesSequence_PMap_length);
-		
-		printf("\n MDEntryInterestRate: ");
-		getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYINTERESTRATE, MDEntriesSequence_PMap_length);
-		
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, NUMBEROFORDERS, MDEntriesSequence_PMap_length);
-		printf("\n NumberOfOrders: ");
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf("\n PriceType: "); 
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYTIME, MDEntriesSequence_PMap_length);
-		printf("\n MDEntryTime: ");
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf("\n MDEntrySize: ");
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYDATE, MDEntriesSequence_PMap_length);
-		printf("\n MDEntryDate: "); 
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDINSERTDATE, MDEntriesSequence_PMap_length);
-		printf("\n MDInsertDate: "); 
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDINSERTTIME, MDEntriesSequence_PMap_length);
-		printf("\n MDInsertTime: "); 
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDSTREAMID, MDEntriesSequence_PMap_length);
-		printf("\n MDStreamID: "); 
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, CURRENCY, MDEntriesSequence_PMap_length);
-		printf("\n Currency: "); 
-		PRINT;
-		
-		printf("\n NetChgPrevDay: ");
-		getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, NETCHGPREVDAY, MDEntriesSequence_PMap_length);
-		
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, SELLERDAYS, MDEntriesSequence_PMap_length);
-		printf("\n SellerDays: ");
-		PRINT;
-		
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf("\n TradeVolume: "); 
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, TICKDIRECTION, MDEntriesSequence_PMap_length);
-		printf("\n TickDirection: ");
-		PRINT;
-		
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf("\n TradeCondition: "); 
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf("\n TradingSessionID: "); 
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf("\n OpenCloseSettlFlag: "); 
-		PRINT;
-		
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, ORDERID, MDEntriesSequence_PMap_length);
-		printf("\n OrderID: "); 
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, TRADEID, MDEntriesSequence_PMap_length);
-		printf("\n TradeID: "); 
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYBUYER, MDEntriesSequence_PMap_length);
-		printf("\n MDEntryBuyer: "); 
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYSELLER, MDEntriesSequence_PMap_length);
-		printf("\n MDEntrySeller: "); 
-		PRINT;
-
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPOSITIONNO, MDEntriesSequence_PMap_length);
-		printf("\n MDEntryPositionNo: "); 
-		PRINT;
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDUPDATEACTION, MDEntriesSequence_PMap_length);
+			printf("\n MDUpdateAction: ");
+			PRINT;
 			
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf("\n SettPriceType: "); 
-		PRINT;
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYTYPE, MDEntriesSequence_PMap_length);
+			printf("\n MDEntryType: ");
+			PRINT;
 
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf("\n LastTradeDate: ");
-		PRINT;
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, SECURITYID, MDEntriesSequence_PMap_length);
+			printf("\n SecurityID: ");
+			PRINT;
+			
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, RPTSEQ, MDEntriesSequence_PMap_length);
+			printf("\n RptSeq: "); 
+			PRINT;
 
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf("\n PriceAdjustmentMethod: "); 
-		PRINT;
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, QUOTECONDITION, MDEntriesSequence_PMap_length);
+			printf("\n QuoteCondition: ");
+			PRINT;
 
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, PRICEBANDTYPE, MDEntriesSequence_PMap_length);
-		printf("\n PriceBandType: "); 
-		PRINT;
+			printf("\n MDEntryPx: ");
+			getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPX, MDEntriesSequence_PMap_length);
+			
+			printf("\n MDEntryInterestRate: ");
+			getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYINTERESTRATE, MDEntriesSequence_PMap_length);
+			
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, NUMBEROFORDERS, MDEntriesSequence_PMap_length);
+			printf("\n NumberOfOrders: ");
+			PRINT;
 
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, PRICELIMITTYPE, MDEntriesSequence_PMap_length);
-		printf("\n PriceAdjustmentMethod: ");
-		PRINT;
-		
-		printf("\n LowLimitPrice: ");
-		getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, LOWLIMITPRICE, MDEntriesSequence_PMap_length);
-		
-		printf("\n HighLimitPrice: ");
-		getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, HIGHLIMITPRICE, MDEntriesSequence_PMap_length);
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			printf("\n PriceType: "); 
+			PRINT;
 
-		printf("\n TradingReferencePrice: ");
-		getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, TRADINGREFERENCEPRICE, MDEntriesSequence_PMap_length);
-		
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf("\n PriceAdjustmentMethod: "); 
-		PRINT;
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYTIME, MDEntriesSequence_PMap_length);
+			printf("\n MDEntryTime: ");
+			PRINT;
 
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf("\n AvgDailyTradedQty: "); 
-		PRINT;
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			printf("\n MDEntrySize: ");
+			PRINT;
 
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf("\n ExpireDate: "); 
-		PRINT;
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYDATE, MDEntriesSequence_PMap_length);
+			printf("\n MDEntryDate: "); 
+			PRINT;
 
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf("\n EarlyTermination: ");
-		PRINT;
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDINSERTDATE, MDEntriesSequence_PMap_length);
+			printf("\n MDInsertDate: "); 
+			PRINT;
 
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf("\n MaxTradeVol: ");
-		PRINT;
-		
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf("\n NoUnderlyings: ");
-		PRINT;
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDINSERTTIME, MDEntriesSequence_PMap_length);
+			printf("\n MDInsertTime: "); 
+			PRINT;
 
-		if(NoUnderlyings > 0){}
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDSTREAMID, MDEntriesSequence_PMap_length);
+			printf("\n MDStreamID: "); 
+			PRINT;
 
-		aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
-		printf("\n IndexSeq: ");
-		PRINT;
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, CURRENCY, MDEntriesSequence_PMap_length);
+			printf("\n Currency: "); 
+			PRINT;
+			
+			printf("\n NetChgPrevDay: ");
+			getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, NETCHGPREVDAY, MDEntriesSequence_PMap_length);
+			
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, SELLERDAYS, MDEntriesSequence_PMap_length);
+			printf("\n SellerDays: ");
+			PRINT;
+			
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			printf("\n TradeVolume: "); 
+			PRINT;
+
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, TICKDIRECTION, MDEntriesSequence_PMap_length);
+			printf("\n TickDirection: ");
+			PRINT;
+			
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			printf("\n TradeCondition: "); 
+			PRINT;
+
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			printf("\n TradingSessionID: "); 
+			PRINT;
+
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			printf("\n OpenCloseSettlFlag: "); 
+			PRINT;
+			
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, ORDERID, MDEntriesSequence_PMap_length);
+			printf("\n OrderID: "); 
+			PRINT;
+
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, TRADEID, MDEntriesSequence_PMap_length);
+			printf("\n TradeID: "); 
+			PRINT;
+
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYBUYER, MDEntriesSequence_PMap_length);
+			printf("\n MDEntryBuyer: "); 
+			PRINT;
+
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYSELLER, MDEntriesSequence_PMap_length);
+			printf("\n MDEntrySeller: "); 
+			PRINT;
+
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, MDENTRYPOSITIONNO, MDEntriesSequence_PMap_length);
+			printf("\n MDEntryPositionNo: "); 
+			PRINT;
+				
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			printf("\n SettPriceType: "); 
+			PRINT;
+
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			printf("\n LastTradeDate: ");
+			PRINT;
+
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			printf("\n PriceAdjustmentMethod: "); 
+			PRINT;
+
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, PRICEBANDTYPE, MDEntriesSequence_PMap_length);
+			printf("\n PriceBandType: "); 
+			PRINT;
+
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, PRICELIMITTYPE, MDEntriesSequence_PMap_length);
+			printf("\n PriceLimitType: ");
+			PRINT;
+			
+			printf("\n LowLimitPrice: ");
+			getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, LOWLIMITPRICE, MDEntriesSequence_PMap_length);
+			
+			printf("\n HighLimitPrice: ");
+			getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, HIGHLIMITPRICE, MDEntriesSequence_PMap_length);
+
+			printf("\n TradingReferencePrice: ");
+			getFieldD(field, &ptr_FASTMessage, FASTMessage_length, MDEntriesSequence_PMap, TRADINGREFERENCEPRICE, MDEntriesSequence_PMap_length);
+			
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			printf("\n PriceBandMidpointPriceType: "); 
+			PRINT;
+
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			printf("\n AvgDailyTradedQty: "); 
+			PRINT;
+
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			printf("\n ExpireDate: "); 
+			PRINT;
+
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			printf("\n EarlyTermination: ");
+			PRINT;
+
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			printf("\n MaxTradeVol: ");
+			PRINT;
+			
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			printf("\n NoUnderlyings: ");
+			PRINT;
+
+			if(NoUnderlyings > 0){}
+
+			aux = getField(field, &ptr_FASTMessage, FASTMessage_length, NONEBITMAP, NONEBITMAP, NONEBITMAP);
+			printf("\n IndexSeq: ");
+			PRINT;
+		}
 	}
 
 }
@@ -361,7 +366,7 @@ void readMessage(FILE* file){
 	int MsgLength = 0;
 
 	//while(fread(&byte, 1, 1, file) > 0){
-	for(int i = 0; i < 1266; i++){ // number of messages //1250
+	for(int i = 0; i < 1342; i++){ // number of messages //1250
 		for(int i = 0; i < 10; i++){ //read header
 			fread(&byte, 1, 1, file);
 			header[i] = byte;
@@ -379,7 +384,7 @@ void readMessage(FILE* file){
 			FASTMessage_length++;
 		}
 
-		if(MsgSeqNum > 731915){ //only to compare with the FIX log
+		if(MsgSeqNum > 731800){ //only to compare with the FIX log
 			printf("\n-----------------------------------------------------------------------------------------------------");
 			printf(" \n Message %d: \n", i+1);
 			printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n", MsgSeqNum, NoChunks, CurrentChunk, MsgLength);
@@ -524,7 +529,8 @@ __uint32_t bytetoPMapDecoder(__uint8_t* field, __int32_t field_length){
 int pMapCheck(__uint32_t PMap, unsigned int PMap_length, __uint32_t noCurrentField){
 	__uint32_t aux_bitMap = 0b00000000000000000000000000000001;
 
-	if(PMap & (aux_bitMap << (32 - PMap_length - noCurrentField))){ //if bitsmap's bit is 1
+	//if(PMap & (aux_bitMap << (32 - PMap_length - noCurrentField))){ //if bitsmap's bit is 1
+	if(PMap & (aux_bitMap << ((PMap_length * 8) - PMap_length - noCurrentField))){ //if bitsmap's bit is 1
 		return 1;
 	}
 	else{
