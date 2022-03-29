@@ -110,7 +110,7 @@ void readMessage(FILE* file){
 	int CurrentChunk = 0;
 	int MsgLength = 0;
 
-	for(int i = 0; i < 1266; i++){ // number of messages //1250
+	for(int i = 0; i < 2000; i++){ // number of messages //1250
 		for(int i = 0; i < 10; i++){ //read header
 			fread(&byte, 1, 1, file);
 			header[i] = byte;
@@ -129,7 +129,7 @@ void readMessage(FILE* file){
 			FASTMessage_length++;
 		}
 
-		if(MsgSeqNum > 731915 && MsgSeqNum < 732049){ //only to compare with the FIX log
+		if(MsgSeqNum > 731915 && MsgSeqNum < 732490){ //only to compare with the FIX log
 			printf("\n-----------------------------------------------------------------------------------------------------");
 
 			/*printf("\n ");

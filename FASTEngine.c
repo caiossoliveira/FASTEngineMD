@@ -732,7 +732,7 @@ void readMessage(FILE* file){
 		}
 
 		//to compare with the onix log
-		if(MsgSeqNum > 731115 && MsgSeqNum < 732436){ //731915 732049){ //just to compare with the FIX log
+		if(MsgSeqNum > 731915 && MsgSeqNum < 732491){ //731915 732491){ //just to compare with the FIX log
 			printf("\n---------------------------------------------------------------------------------------\n");
 			//printf(" \n Message %d: \n", i+1);
 			//printf(" MsgSeqNum: %d \n NoChunks: %d \n CurrentChunk: %d \n MsgLength: %d \n", MsgSeqNum, 
@@ -930,7 +930,12 @@ __int64_t getField64I(__uint8_t** FASTMessage, int FASTMessage_length,
 
 	if((thereIsPMap && PmapIs1) || !thereIsPMap){ //if the value is in the stream (nullable or not)
 		__uint8_t* pt_value = getField(streamValue, FASTMessage, FASTMessage_length, PMap, PMap_length, PMap_order, 0);
+
 		value = bytetoInt64Decoder(pt_value);
+
+		if(*pt_value == 0x80){
+			return ABSENT_64;
+		}
 		
 		int size = fieldLength(pt_value);
 		size = (size * 8) - size; //- size because of the end bits

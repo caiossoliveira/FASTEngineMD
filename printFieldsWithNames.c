@@ -366,7 +366,7 @@ void readMessage(FILE* file){
 	int MsgLength = 0;
 
 	//while(fread(&byte, 1, 1, file) > 0){
-	for(int i = 0; i < 1342; i++){ // number of messages //1250
+	for(int i = 0; i < 1700; i++){ // number of messages //1250
 		for(int i = 0; i < 10; i++){ //read header
 			fread(&byte, 1, 1, file);
 			header[i] = byte;
